@@ -10,7 +10,8 @@ Commits will be added shortly which will allow the PIN to be stored in NAND and 
 # Warning before installation
 
 If you install this payload and then forget the PIN, you will be unable to access your 3DS under all but the following circumstance:
-1. You have a backup of your sysNAND before you installed 3DSafe
+
+1. You have a backup of your sysNAND before you installed 3DSafe, AND:
 2. You have a hardmod through which you can flash this sysNAND backup
 
 Unless you have both of these, if you forget the PIN, your 3DS is completely useless. There is no failsafe, no backdoor. The idea of 3DSafe is that it is impossible to circumvent the PIN request.
