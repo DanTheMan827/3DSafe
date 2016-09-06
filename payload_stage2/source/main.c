@@ -1,17 +1,14 @@
-/*
-*   main.c
-*/
-
 #include "types.h"
-#include "buttons.h"
-#include "memory.h"
 #include "i2c.h"
-#include "cache.h"
-#include "fs.h"
-#include "firm.h"
+#include "screen.h"
+#include "utils.h"
+#include "fatfs/ff.h"
+#include "memory.h"
 #include "../build/bundled.h"
+#include "buttons.h"
 
-#define A11_PAYLOAD_LOC 0x1FFF4C80 //Keep in mind this needs to be changed in the ld script for arm11 too
+#define PAYLOAD_ADDRESS 0x23F00000
+#define A11_PAYLOAD_LOC 0x1FFF4C80 //keep in mind this needs to be changed in the ld script for arm11 too
 #define A11_ENTRY       0x1FFFFFF8
 
 static void ownArm11(u32 screenInit)
@@ -28,60 +25,107 @@ static void ownArm11(u32 screenInit)
     while(*(vu32 *)A11_ENTRY);
 }
 
-static inline void clearScreens(void)
+static inline void prepareForBoot()
 {
-    memset32((void *)0x18300000, 0, 0x46500);
-    memset32((void *)0x18346500, 0, 0x38400);
+	setFramebuffers();
+	ownArm11(1);
+	clearScreens();
+	turnOnBacklight(); // Always screen init because CBM9 doesn't have it, and that gave me a heart attack.
 }
 
-void main(void)
-{
-    mountSD();
+void bootPayload() {
+	FIL payload;
+	unsigned int br;
 
-    u32 payloadFound;
-
-    if(fileRead((void *)PAYLOAD_ADDRESS, "homebrew/3ds/a9nc.bin")) // Full A9NC support
+	if(f_open(&payload, "arm9loaderhax.bin", FA_READ) == FR_OK)
     {
-        payloadFound = 1;
-        ownArm11(1);
-        clearScreens();
-        i2cWriteRegister(3, 0x22, 0x2A); //Turn on backlight
-        f_unlink("homebrew/3ds/a9nc.bin");
-    }
-    else if(fileRead((void *)PAYLOAD_ADDRESS, "homebrew/3ds/boot.bin"))
-    {
-        payloadFound = 1;
-        if (HID_PAD != BUTTON_LEFT) // If DPAD_LEFT is not held
-        {
-            ownArm11(0); // Don't init the screen
-        }
-        else // If DPAD_LEFT is held
-        {
-            ownArm11(1); // Init the screen
-            clearScreens();
-            i2cWriteRegister(3, 0x22, 0x2A); //Turn on backlight
-        }
-    }
-    else //No payload found/no SD inserted
-    {
-        payloadFound = 0;
-        ownArm11(0);
-    }
-
-    //Jump to payload
-    if(payloadFound)
-    {
-        flushCaches();
-
+//         prepareForBoot();
+        f_read(&payload, (void *)PAYLOAD_ADDRESS, f_size(&payload), &br);
         ((void (*)())PAYLOAD_ADDRESS)();
+        i2cWriteRegister(I2C_DEV_MCU, 0x20, 1);
     }
+    else
+    {
+//         prepareForBoot();
+		clearScreens();
+        error("Couldn't find the payload.\nMake sure to either:\n 1) Have SD card plugged in\n 2) Have arm9loaderhax.bin at SD root");
+    }
+}
 
-    unmountSD();
+void drawPin(char * entered) {
+	clearScreens();
+	drawString("Enter PIN", 10, 10, COLOR_RED);
+	drawString(entered, 10, 30, COLOR_WHITE);
+}
 
-    //If the SAFE_MODE combo is not pressed, try to patch and boot the CTRNAND FIRM
-    if(HID_PAD != SAFE_MODE) loadFirm();
-
-    flushCaches();
-    i2cWriteRegister(I2C_DEV_MCU, 0x20, 1);
-    while(1);
+void main()
+{
+    FATFS fs;
+    f_mount(&fs, "0:", 0); //This never fails due to deferred mounting
+    
+    prepareForBoot();
+    
+    int pinPos = 0;
+    char pin[] = "BARRAL";
+    int pinlen = strlen(pin);
+    char entered[pinlen+1];// = "----";
+    
+    for (int i=0; i<pinlen; i++) {
+    	entered[i] = '-';
+    }
+    
+    entered[pinlen] = '\0';
+    
+//     drawString(entered, 10, 30, COLOR_WHITE);
+    
+    while (pinPos < pinlen) {
+    	drawPin(entered);
+    
+    	char append;
+    
+    	u32 key = waitInput();
+    	
+    	if (key == BUTTON_A) {
+    		append = 'A';
+    	}
+    	else if (key == BUTTON_B) {
+    		append = 'B';
+    	}
+    	else if (key == BUTTON_X) {
+    		append = 'X';
+    	}
+    	else if (key == BUTTON_Y) {
+    		append = 'Y';
+    	}
+    	else if (key == BUTTON_UP) {
+    		append = 'U';
+    	}
+    	else if (key == BUTTON_DOWN) {
+    		append = 'D';
+    	}
+    	else if (key == BUTTON_LEFT) {
+    		append = 'L';
+    	}
+    	else if (key == BUTTON_RIGHT) {
+    		append = 'R';
+    	}
+    	else {
+    		append = '-';
+    	}
+    	
+    	if (append != '-') {
+    		entered[pinPos] = append;		
+			pinPos++;
+    	}
+    }
+    
+    if (strcmp(pin, entered) == 0) {
+    	drawPin(entered);
+    	bootPayload();
+    }
+    else {
+    	clearScreens();
+    	error("Incorrect PIN");
+//     	bootPayload();
+    }    
 }
