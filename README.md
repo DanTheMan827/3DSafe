@@ -1,7 +1,7 @@
 # 3DSafe
 *In-NAND PIN lock for 3DS*
 
-3DSafe is an arm9loaderhax payload which will lock your sysnand with a PIN. The PIN request is displayed as soon as the 3DS is powered on. After successfully entering the PIN, arm9loaderhax.bin is loaded from the SD card.
+3DSafe is an arm9loaderhax payload which will lock your sysnand with a PIN. The PIN request is displayed as soon as the 3DS is powered on. Because the 3DSafe payload is the A9LH stage1/stage2 payload, it is stored in NAND itself, not on the SD card. There is no way to change the PIN or circumvent it by removing the SD card or modifying files on it. After successfully entering the PIN, arm9loaderhax.bin is loaded from the SD card.
 
 Currently, the PIN is hard-coded in payload_stage2/source/main.c in the variable char pin[]. If you want to change the PIN, you will need to edit the value of this variable, recompile 3DSafe from source, and reinstall the payloads using SafeA9LHInstaller.
 
