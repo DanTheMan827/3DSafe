@@ -1,5 +1,4 @@
 screen_init/obj
-out
 payload_stage1/build
 payload_stage2/build
 payload_stage2/data
