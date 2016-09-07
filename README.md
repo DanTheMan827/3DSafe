@@ -15,12 +15,11 @@ If you install this payload and then forget the PIN, you will be unable to acces
 Unless you have both of these, if you forget the PIN, your 3DS is completely useless. There is no failsafe, no backdoor. The idea of 3DSafe is that it is impossible to circumvent the PIN request.
 
 ##How to Install
-1. Set the pin as above to whatever you want it to be (this will change to a more user-friendly method in due course)
-2. Compile the payloads by typing 'make' into your console
-3. From the 'out' directory, copy payload_stage1.bin and payload_stage2.bin to the a9lh folder on the root directory of your 3DS SD card
-4. Run SafeA9LHInstaller according to its instructions to install the payloads
-5. Power off your 3DS and power back on, and you will be prompted to enter the PIN
-6. After entering the PIN, whatever A9LH payload you already had at /arm9loaderhax.bin will be booted
+1. From the 'out' directory of this repo, copy payload_stage1.bin and payload_stage2.bin to the a9lh folder on the root directory of your 3DS SD card
+2. Create a file called pin.txt at the root of your SD card, and enter your PIN. ONLY enter the characters A, B, X, Y, U, D, L or R. These correspond to the ABXY and D-Pad buttons on the 3DS. If you enter any other characters, it will not be possible to correctly enter the PIN.
+3. Run SafeA9LHInstaller according to its instructions to install the payloads
+4. Power off your 3DS and power back on, and you will be prompted to enter the PIN
+5. After entering the PIN, whatever A9LH payload you already had at /arm9loaderhax.bin will be booted
 
 ##Planned features:
 
