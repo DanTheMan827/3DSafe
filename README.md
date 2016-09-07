@@ -5,8 +5,6 @@
 
 Currently, the PIN is loaded from a file on SD (/pin.txt). This means that editing the file will change the PIN, and deleting it will remove the requirement to enter the PIN. This will change once NAND reading and writing has been added, at which point the PIN will be stored in NAND and it will not be possible to change it until the PIN has been entered.
 
-Commits will be added shortly which will allow the PIN to be stored in NAND and changed on the fly without having to reinstall anything.
-
 # Warning before installation
 
 If you install this payload and then forget the PIN, you will be unable to access your 3DS under all but the following circumstance:
@@ -27,7 +25,6 @@ Unless you have both of these, if you forget the PIN, your 3DS is completely use
 ##Planned features:
 
 * Store PIN in NAND
-* Change PIN without recompiling/reinstalling
 
 ## Credits
 
