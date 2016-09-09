@@ -206,6 +206,7 @@ void displayOptions() {
 		drawString("3DSafe Options", 10, 10, COLOR_RED);
 		drawString("START: Boot payload", 10, 30, COLOR_WHITE);
 		drawString("    A: Change PIN", 10, 40, COLOR_WHITE);
+		drawString("    B: Power off", 10, 50, COLOR_WHITE);
 
 		//Wait for input
 		key = waitInput();
@@ -241,6 +242,13 @@ void displayOptions() {
 	*/
 	else if (key == BUTTON_A) {
 		setNewPIN();
+	}
+	
+	/*
+	User opted to power off
+	*/
+	else if (key == BUTTON_B) {
+		mcuShutDown();
 	}
 }
 
