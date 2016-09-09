@@ -6,8 +6,6 @@
 # If you forget your PIN
 Because everything to do with 3DSafe is in NAND, you cannot remove the PIN lock or change the PIN until you have already got past the request for the PIN. For this reason, a bypass is included. This involves getting your console-specific OTP, placing it at /otp.bin on your 3DS SD card, and then booting. 3DSafe will detect the presence of the OTP file and bypass the PIN request, allowing you to change the PIN and boot the console.
 
-*Note: otp.bin verification is not yet implemented. Currently, any file called 'otp.bin' will trigger the PIN bypass.*
-
 # You must safeguard your PIN and your OTP.bin
 I cannot stress this enough. If you install 3DSafe, forget your PIN and lose your OTP, your 3DS will be a brick. There is absolutely no way to circumvent the PIN request without the OTP.bin. The only thing you would be able to do in this situation would be to hardmod your 3DS and use the hardmod to write a NAND backup which does not have 3DSafe installed (or one in which you know the PIN). If you forget your PIN, lose your OTP.bin and don't have a NAND backup you can restore using a hardmod, your 3DS will be *permanently bricked*.
 
@@ -22,7 +20,11 @@ I have tested this on my EUR n3DS. I make absolutely no guarantee that it will w
 3. Download and extract the 3DSafe release, and copy payload_stage1.bin and payload_stage2.bin to the a9lh folder on the root directory of your 3DS SD card
 4. Run SafeA9LHInstaller according to its instructions to install the payloads
 5. Power off your 3DS and power back on, and you will be prompted to set a new PIN
-6. After entering the PIN, whatever A9LH payload you already had at /arm9loaderhax.bin will be booted
+6. After entering a PIN, you will be able to boot your 3DS
+7. Reboot your 3DS and confirm that your PIN unlocks it
+8. Copy your otp.bin to the root of your SD card and reboot your 3DS
+9. When 3DSafe starts up, confirm that your OTP has successfully circumvented the PIN lock. This will ensure that you have a valid OTP to bypass the PIN lock if you ever forget your 3DSafe PIN
+10. Delete the otp.bin from the root of your SD card. Make sure you have multiple backups of this file elsewhere than your 3DS SD card. It's only a small file, so I recommend emailing it to yourself, putting it on a Dropbox, uploading it to a web host, burning it to a disc, putting it on a memory stick, or as many of these as is possible.
 
 ##Possible future addition:
 
@@ -37,3 +39,5 @@ This project is based on ShadowNAND by @RShadowhand, from which it is forked. Al
 * godmode.h
 * fatfs (modified to mount/read/write 3DS NAND partitions)
 * nand
+
+3DSafe also includes OTP verification routines from SafeA9LHInstaller by AuroriaWright.

@@ -1,3 +1,8 @@
+/*
+OTP verification code by AuroraWright, and taken from SafeA9LHInstaller
+https://github.com/AuroraWright/SafeA9LHInstaller
+*/
+
 #include "otp.h"
 #include "fatfs/ff.h"
 #include "utils.h"
