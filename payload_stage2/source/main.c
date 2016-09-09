@@ -8,6 +8,7 @@
 #include "buttons.h"
 #include <string.h>
 #include "godmode.h"
+#include "otp.h"
 
 #define PAYLOAD_ADDRESS 0x23F00000
 #define A11_PAYLOAD_LOC 0x1FFF4C80 //keep in mind this needs to be changed in the ld script for arm11 too
@@ -318,23 +319,35 @@ int main()
     FATFS otpFS;
 	f_mount(&otpFS, "0:", 0);
     FIL otp;
-    FRESULT RES = f_open(&otp, "otp.bin", FA_READ);
+    char * otpPath = "otp.bin";
+    FRESULT RES = f_open(&otp,otpPath, FA_READ);
     f_mount(NULL, "0:", 0);
     
     /*
-    OTP file was found
+    An otp.bin was found. Check if it is valid for this console
     */
-	if(RES == FR_OK) {
-		//Inform the user that the PIN lock has been bypassed
-		drawString("PIN LOCK BYPASSED. Press any key to enter 3DSafe options", 10, 10, COLOR_RED);
-		//Wait for a keypress
-		waitInput();
-		clearScreens();
-		//Jump straight to the options menu without asking for the PIN
-		displayOptions();
-		return 0;
-	}
-	
+    if(RES == FR_OK) {
+    	if (otpIsValid(otpPath)) {
+			//Inform the user that the PIN lock has been bypassed
+			drawString("PIN LOCK BYPASSED. Press any key to enter 3DSafe options", 10, 10, COLOR_RED);
+			//Wait for a keypress
+			waitInput();
+			clearScreens();
+			//Jump straight to the options menu without asking for the PIN
+			displayOptions();
+			return 0;
+		}
+		else {
+			//Inform the user that the OTP is invalid
+			clearScreens();
+			drawString("INVALID otp.bin. Press any key to proceed to enter PIN.", 10, 10, COLOR_RED);
+			//Wait for a keypress
+			waitInput();
+			clearScreens();
+			
+			//Continue as normal from this point (request PIN)
+		}
+    }
     
 	/*
 	Enter Godmode to gain access to SysNAND
