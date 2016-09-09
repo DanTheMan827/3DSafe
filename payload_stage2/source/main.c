@@ -6,6 +6,8 @@
 #include "memory.h"
 #include "../build/bundled.h"
 #include "buttons.h"
+#include <string.h>
+#include "godmode.h"
 
 #define PAYLOAD_ADDRESS 0x23F00000
 #define A11_PAYLOAD_LOC 0x1FFF4C80 //keep in mind this needs to be changed in the ld script for arm11 too
@@ -33,129 +35,85 @@ static inline void prepareForBoot()
 	turnOnBacklight(); // Always screen init because CBM9 doesn't have it, and that gave me a heart attack.
 }
 
-void bootPayload() {
-	FIL payload;
-	unsigned int br;
-
-	if(f_open(&payload, "arm9loaderhax.bin", FA_READ) == FR_OK)
-    {
-//         prepareForBoot();
-        f_read(&payload, (void *)PAYLOAD_ADDRESS, f_size(&payload), &br);
-        ((void (*)())PAYLOAD_ADDRESS)();
-        i2cWriteRegister(I2C_DEV_MCU, 0x20, 1);
-    }
-    else
-    {
-//         prepareForBoot();
-		clearScreens();
-        error("Couldn't find the payload.\nMake sure to either:\n 1) Have SD card plugged in\n 2) Have arm9loaderhax.bin at SD root");
-    }
+/*
+Translate buttons received by waitInput() into char equivalents representing the pressed button (used for building the entered PIN)
+*/
+char translateButton(u32 key) {
+	if (key == BUTTON_A) {
+		return 'A';
+	}
+	else if (key == BUTTON_B) {
+		return 'B';
+	}
+	else if (key == BUTTON_X) {
+		return 'X';
+	}
+	else if (key == BUTTON_Y) {
+		return 'Y';
+	}
+	else if (key == BUTTON_UP) {
+		return 'U';
+	}
+	else if (key == BUTTON_DOWN) {
+		return 'D';
+	}
+	else if (key == BUTTON_LEFT) {
+		return 'L';
+	}
+	else if (key == BUTTON_RIGHT) {
+		return 'R';
+	}
+	else {
+		return '-';
+	}
 }
 
-void drawPin(char * entered) {
-	clearScreens();
-	drawString("Enter PIN", 10, 10, COLOR_RED);
-	drawString(entered, 10, 30, COLOR_WHITE);
-}
+//Forward declaration
+void bootPayload();
 
-void main()
-{
-	/*
-	Mount SD card
-	*/
-    FATFS fs;
-    f_mount(&fs, "0:", 0); //This never fails due to deferred mounting
-    
-    /*
-    Screen init
-    */
-    prepareForBoot();
-    
-	FIL pinFile;
+/*
+Prompt the user to enter a new PIN
+*/
+void setNewPIN() {
+	//Flag to keep us inside the while loop to keep entering characters
+	u32 getPIN = 1;
+	//Buffer for the entered values
+	char entered[8];
+	//Start at the beginning of the buffer
+	u32 pinPos = 0;
 
-	/*
-	Try to open the PIN file
-	*/
-    if(f_open(&pinFile, "pin.txt", FA_READ) == FR_OK) {
-    	/*
-    	Read the PIN file into the buffer 'pin'
-    	*/
-		unsigned int br;
-		char pin[f_size(&pinFile)];
-		int pinlen = f_size(&pinFile);
-		
-		for (int i=0; i<pinlen; i++) {
-			pin[i] = '-';
-		}
-
-        f_read(&pinFile, pin, f_size(&pinFile), &br);
-        f_close(&pinFile);
-        
-        pin[pinlen] = '\0';
-        
-        /*
-        DEBUG: print the read PIN on the screen
-        */
-        /*
-	    drawString(pin, 10, 10, COLOR_RED);
-		waitInput();
+	//Clear the buffer
+	for (int i=0; i<8; i++) {
+		entered[i] = '\0';
+	}
+	
+	//While still entering characters
+	while (getPIN == 1) {
+		/*
+		Draw a prompt to enter some characters for the PIN
+		*/
 		clearScreens();
-		*/
-		
-		/*
-		Start at the beginning of the PIN and with an empty entry
-		*/
-		int pinPos = 0;
-		char entered[pinlen+1];
+		drawString("Enter new PIN using ABLR and D-Pad (max. 8 characters)", 10, 10, COLOR_RED);
+		drawString("Press START when done", 10, 30, COLOR_WHITE);
+		drawString(entered, 10, 50, COLOR_WHITE);
+
+		//Wait for the user to press a button
+		u32 key = waitInput();
 	
-		for (int i=0; i<pinlen; i++) {
-			entered[i] = '-';
+		/*
+		If the user presses START, break out of the while loop
+		*/
+		if (key == BUTTON_START) {
+			getPIN = 0;
 		}
-	
-		entered[pinlen] = '\0';
-	
-		/*
-		While the user has not finished entering the PIN...
-		*/	
-		while (pinPos < pinlen) {
-			//Draw the prompt to enter the PIN and whatever has already been entered
-			drawPin(entered);
-	
-			//Buffer for the entered character
-			char append;
-			
-			//Wait for the user to press a button
-			u32 key = waitInput();
-			
-			//Translate the pressed button to a character in the PIN
-			if (key == BUTTON_A) {
-				append = 'A';
-			}
-			else if (key == BUTTON_B) {
-				append = 'B';
-			}
-			else if (key == BUTTON_X) {
-				append = 'X';
-			}
-			else if (key == BUTTON_Y) {
-				append = 'Y';
-			}
-			else if (key == BUTTON_UP) {
-				append = 'U';
-			}
-			else if (key == BUTTON_DOWN) {
-				append = 'D';
-			}
-			else if (key == BUTTON_LEFT) {
-				append = 'L';
-			}
-			else if (key == BUTTON_RIGHT) {
-				append = 'R';
-			}
-			else {
-				append = '-';
-			}
 		
+		/*
+		If the user presses any other button...
+		*/
+		else {
+			//Translate the pressed key to a character
+			char append = translateButton(key);
+	
 			/*
 			The user pressed a button which can exist in the PIN
 			*/
@@ -164,31 +122,312 @@ void main()
 				entered[pinPos] = append;		
 				//Go to the next character position in the PIN
 				pinPos++;
+				
+				/*
+				If 8 characters have been entered, break out of the while loop
+				*/
+				if (pinPos >= 8) {
+					getPIN = 0;
+				}
 			}
 		}
+	}
+
+	clearScreens();
+
+	/*
+	Enter god mode if necessary
+	*/
+	if (!godMode) {
+		/*
+		Enter Godmode to gain access to SysNAND
+		*/
+		if(!enterGodMode()) {
+			error("Could not gain access to SysNAND");
+		}
+	}
+
+	/*
+	Open the pin file in NAND
+	*/
+	FIL pinFile;
+
+	if(f_open(&pinFile, "1:/pin.txt", FA_WRITE | FA_CREATE_ALWAYS) == FR_OK) {
+		/*
+		Write the PIN to the file
+		*/
+		unsigned int bw;
+		f_write (&pinFile, entered, 8, &bw);
+		f_sync(&pinFile);
+		f_close(&pinFile);
 	
 		/*
-		If the entered PIN matches what is expected, do one final screen refresh and then boot the A9LH payload from SD card
+		Show success message and then boot payload
 		*/
-		if (strcmp(pin, entered) == 0) {
-			drawPin(entered);
+		if (bw > 0) {
+			drawString("PIN changed to:", 10, 10, COLOR_RED);
+			drawString(entered, 10, 30, COLOR_WHITE);
+			drawString("Press any key to boot payload", 10, 50, COLOR_WHITE);
+
+			waitInput();
 			bootPayload();
 		}
 		
 		/*
-		If the entered PIN does not match what is expected, show an error
+		Show save error
 		*/
 		else {
-			clearScreens();
-			error("Incorrect PIN");
+			error("The PIN could not be saved (no bytes written)");
 		}
-    }
+	}
+	
+	/*
+	Show PIN file open error
+	*/
+	else {
+		error("The PIN could not be saved (file open fail)");
+	}
+}
+
+/*
+Show the options menu to the user
+*/
+void displayOptions() {	
+	//Buffer for read keypresses
+	u32 key;
+	//Stay in the while loop until a valid option was selected
+	u32 validOption = 0;
+
+	while (validOption == 0) {
+		/*
+		Display the options on the screen
+		*/
+		clearScreens();
+		drawString("3DSafe Options", 10, 10, COLOR_RED);
+		drawString("START: Boot payload", 10, 30, COLOR_WHITE);
+		drawString("    A: Change PIN", 10, 40, COLOR_WHITE);
+
+		//Wait for input
+		key = waitInput();
+		
+		/*
+		If the button pressed corresponds to a menu option, break out of the while loop
+		*/
+		if (key == BUTTON_START || key == BUTTON_A || key == BUTTON_B) {
+			validOption = 1;
+		}
+	}
+
+	clearScreens();
+
+	/*
+	User opted to boot the payload
+	*/
+	if (key == BUTTON_START) {
+		/*
+		If not in god mode, mount the SD card so the payload will be found
+		*/
+		if (!godMode) {			
+			FATFS afs;
+			f_mount(&afs, "0:", 0);
+		}
+	
+		//Boot the payload
+		bootPayload();
+	}
+	
+	/*
+	User opted to change the PIN
+	*/
+	else if (key == BUTTON_A) {
+		setNewPIN();
+	}
+}
+
+/*
+Boot /arm9loaderhax from SD card
+*/
+void bootPayload() {
+	/*
+	Try to open the payload file
+	*/
+	FIL payload;
+	unsigned int br;
+
+	if(f_open(&payload, "arm9loaderhax.bin", FA_READ) == FR_OK)
+	{
+		/*
+		Read the payload and boot it
+		*/
+		f_read(&payload, (void *)PAYLOAD_ADDRESS, f_size(&payload), &br);					
+		((void (*)())PAYLOAD_ADDRESS)();
+		i2cWriteRegister(I2C_DEV_MCU, 0x20, 1);
+	}
+	
+	/*
+	Display an error if the payload can't be found
+	*/
+	else
+	{
+		error("Couldn't find the payload.\nMake sure to either:\n 1) Have SD card plugged in\n 2) Have arm9loaderhax.bin at SD root");
+	}
+}
+
+/*
+Draw the 'enter pin' prompt along with whatever has already been entered
+*/
+void drawPin(char * entered) {
+	clearScreens();
+	drawString("Enter PIN", 10, 10, COLOR_RED);
+	drawString(entered, 10, 30, COLOR_WHITE);
+}
+
+int main()
+{
+    /*
+    Screen init
+    */
+    prepareForBoot();
     
     /*
-    No PIN file exists. Just boot the payload
+    DEBUG: Allow skipping past everything for brick protection during development
     */
-    else {
-	    bootPayload();
+//     drawString("Press X to skip 3DSafe, any other button to enter 3DSafe", 10, 10, COLOR_RED);
+//     u32 key = waitInput();
+//     if (key == BUTTON_X) {
+// 		FATFS afs;
+// 		f_mount(&afs, "0:", 0); //This never fails due to deferred mounting
+//     	bootPayload();
+//     	return 0;
+//     }
+//     clearScreens();
+    
+    /*
+    OTP BYPASS
+    First, mount the SD card, check if the otp exists, and store the result in RES.
+    Then unmount the SD card (leaving it mounted might interfere with entering god mode later)
+    */
+    FATFS otpFS;
+	f_mount(&otpFS, "0:", 0);
+    FIL otp;
+    FRESULT RES = f_open(&otp, "otp.bin", FA_READ);
+    f_mount(NULL, "0:", 0);
+    
+    /*
+    OTP file was found
+    */
+	if(RES == FR_OK) {
+		//Inform the user that the PIN lock has been bypassed
+		drawString("PIN LOCK BYPASSED. Press any key to enter 3DSafe options", 10, 10, COLOR_RED);
+		//Wait for a keypress
+		waitInput();
+		clearScreens();
+		//Jump straight to the options menu without asking for the PIN
+		displayOptions();
+		return 0;
+	}
+	
+    
+	/*
+	Enter Godmode to gain access to SysNAND
+	*/
+	if(!enterGodMode()) {
+		error("Could not gain access to SysNAND");
+	}
+	
+	/*
+	Try to read the PIN file from SysNAND
+	*/
+	//File read buffer
+	char pin[9];
+    
+    if (!getPINFromNAND(pin)) {
+	    //If no PIN could be read from NAND, try creating a new one
+    	setNewPIN();
+    	
+    	//If we still can't get a PIN from NAND, show an error and die
+    	if (!getPINFromNAND(pin)) {	
+			error("Failed to get PIN from NAND. You should use otp.bin bypass to regain access to your device");
+		}
     }
+	
+	/*
+	DEBUG: print the read PIN on the screen
+	*/
+// 	drawString(pin, 10, 10, COLOR_RED);
+// 	waitInput();
+// 	clearScreens();
+	
+	//Get the length of the PIN
+	int pinlen = strlen(pin);
+	
+	/*
+	Start at the beginning of the PIN and with an empty input buffer
+	*/
+	int pinPos = 0;
+	char entered[pinlen+1];
+
+	/*
+	Clear the input buffer to dashes (for display purposes)
+	*/
+	for (int i=0; i<pinlen; i++) {
+		entered[i] = '-';
+	}
+	entered[pinlen] = '\0';
+
+	/*
+	While the user has not finished entering the PIN...
+	*/	
+	while (pinPos < pinlen) {
+		//Draw the prompt to enter the PIN and whatever has already been entered
+		drawPin(entered);
+
+		//Wait for the user to press a button
+		u32 key = waitInput();
+		
+		//Translate the pressed key to a character
+		char append = translateButton(key);
+				
+		/*
+		The user pressed a button which can exist in the PIN
+		*/
+		if (append != '-') {
+			//Change the character in the entered PIN at the current position to the character entered
+			entered[pinPos] = append;		
+			//Go to the next character position in the PIN
+			pinPos++;
+		}
+	}
+
+	/*
+	If the entered PIN matches what is expected, display the options to the user
+	*/
+	if (strcmp(pin, entered) == 0) {
+		drawPin(entered);
+		displayOptions();
+	}
+	
+	/*
+	If the entered PIN does not match what is expected, show an error
+	*/
+	else {		
+		clearScreens();
+		
+		error("Incorrect PIN\n \nIf you have forgotten your PIN, place your\notp.bin at the root of your SD card. The\nfilename must be in lower case, and the\nOTP must match this device. You will then\nbe able to reset your 3DSafe PIN");
+		
+// 		drawString("Incorrect PIN", 10, 10, COLOR_RED);
+		
+// 		drawString("Incorrect PIN\n\nIf you have forgotten your PIN, place your\notp.bin at the root of your SD card. The\nfilename must be in lower case, and the\nOTP must match this device. You will then\nbe able to reset your 3DSafe PIN", 10, 30, COLOR_WHITE);
+// 		drawString("", 10, 40, COLOR_WHITE);
+// 		drawString("", 10, 50, COLOR_WHITE);
+// 		drawString("", 10, 60, COLOR_WHITE);		
+// 		drawString(".", 10, 70, COLOR_WHITE);
+// 		
+// 		drawString("Press any key to power off", 10, 90, COLOR_RED);
+		
+// 		waitInput();
+// 		
+// 		mcuShutDown();
+	}
     
 }

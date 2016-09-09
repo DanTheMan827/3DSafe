@@ -1,21 +1,21 @@
 /*---------------------------------------------------------------------------/
-/  FatFs - FAT file system module configuration file  R0.12  (C)ChaN, 2016
+/  FatFs - FAT file system module configuration file
 /---------------------------------------------------------------------------*/
 
-#define _FFCONF 88100	/* Revision ID */
+#define _FFCONF 80186	/* Revision ID */
 
 /*---------------------------------------------------------------------------/
 / Function Configurations
 /---------------------------------------------------------------------------*/
 
-#define _FS_READONLY	1
+#define _FS_READONLY	0
 /* This option switches read-only configuration. (0:Read/Write or 1:Read-only)
 /  Read-only configuration removes writing API functions, f_write(), f_sync(),
 /  f_unlink(), f_mkdir(), f_chmod(), f_rename(), f_truncate(), f_getfree()
 /  and optional writing functions as well. */
 
 
-#define _FS_MINIMIZE	3
+#define _FS_MINIMIZE	0
 /* This option defines minimization level to remove some basic API functions.
 /
 /   0: All basic functions are enabled.
@@ -39,7 +39,7 @@
 /  f_findnext(). (0:Disable, 1:Enable 2:Enable with matching altname[] too) */
 
 
-#define	_USE_MKFS		0
+#define	_USE_MKFS		1
 /* This option switches f_mkfs() function. (0:Disable or 1:Enable) */
 
 
@@ -56,14 +56,13 @@
 /  (0:Disable or 1:Enable) Also _FS_READONLY needs to be 0 to enable this option. */
 
 
-#define _USE_LABEL		0
+#define _USE_LABEL		1
 /* This option switches volume label functions, f_getlabel() and f_setlabel().
 /  (0:Disable or 1:Enable) */
 
 
 #define	_USE_FORWARD	0
-/* This option switches f_forward() function. (0:Disable or 1:Enable)
-/  To enable it, also _FS_TINY need to be 1. */
+/* This option switches f_forward() function. (0:Disable or 1:Enable) */
 
 
 /*---------------------------------------------------------------------------/
@@ -118,13 +117,13 @@
 
 
 #define	_LFN_UNICODE	0
-/* This option switches character encoding on the API. (0:ANSI/OEM or 1:Unicode)
+/* This option switches character encoding on the API. (0:ANSI/OEM or 1:UTF-16)
 /  To use Unicode string for the path name, enable LFN and set _LFN_UNICODE = 1.
 /  This option also affects behavior of string I/O functions. */
 
 
-#define _STRF_ENCODE	3
-/* When _LFN_UNICODE == 1, this option selects the character encoding on the file to
+#define _STRF_ENCODE	0
+/* When _LFN_UNICODE == 1, this option selects the character encoding ON THE FILE to
 /  be read/written via string I/O functions, f_gets(), f_putc(), f_puts and f_printf().
 /
 /  0: ANSI/OEM
@@ -148,12 +147,12 @@
 / Drive/Volume Configurations
 /---------------------------------------------------------------------------*/
 
-#define _VOLUMES	1
+#define _VOLUMES	10
 /* Number of volumes (logical drives) to be used. */
 
 
 #define _STR_VOLUME_ID	0
-#define _VOLUME_STRS	"RAM","NAND","CF","SD1","SD2","USB1","USB2","USB3"
+#define _VOLUME_STRS	"sdcard","sysnand","systwln","systwlp","emunand","emutwln","emutwlp","imgnand","imgtwln","imgtwlp"
 /* _STR_VOLUME_ID switches string support of volume ID.
 /  When _STR_VOLUME_ID is set to 1, also pre-defined strings can be used as drive
 /  number in the path name. _VOLUME_STRS defines the drive ID strings for each
@@ -161,7 +160,7 @@
 /  the drive ID strings are: A-Z and 0-9. */
 
 
-#define	_MULTI_PARTITION	0
+#define	_MULTI_PARTITION	1
 /* This option switches support of multi-partition on a physical drive.
 /  By default (0), each logical drive number is bound to the same physical drive
 /  number and only an FAT volume found on the physical drive will be mounted.
@@ -217,7 +216,7 @@
 
 
 #define _FS_NORTC	1
-#define _NORTC_MON	3
+#define _NORTC_MON	1
 #define _NORTC_MDAY	1
 #define _NORTC_YEAR	2016
 /* The option _FS_NORTC switches timestamp functiton. If the system does not have

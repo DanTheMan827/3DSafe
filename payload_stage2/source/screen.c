@@ -2,6 +2,8 @@
 #include "types.h"
 #include "font.h"
 #include "i2c.h"
+#include <string.h>
+#include "memory.h"
 
 #define SCREEN_SIZE	400 * 240 * 3 / 4 //yes I know this is more than the size of the bootom screen
 #define SCREEN_TOP_WIDTH 400

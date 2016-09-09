@@ -4,7 +4,13 @@ ifeq ($(strip $(DEVKITARM)),)
 $(error "Please set DEVKITARM in your environment. export DEVKITARM=<path to>devkitARM")
 endif
 
-include $(DEVKITARM)/3ds_rules
+INCLUDES	:=	source source/font source/fatfs source/nand
+
+export INCLUDE	:=	$(foreach dir,$(INCLUDES),-I$(CURDIR)/$(dir)) \
+			$(foreach dir,$(LIBDIRS),-I$(dir)/include) \
+			-I$(CURDIR)/$(BUILD)
+
+# include $(DEVKITARM)/3ds_rules
 
 CC := arm-none-eabi-gcc
 AS := arm-none-eabi-as
@@ -17,9 +23,12 @@ dir_source := source
 dir_build := build
 dir_data := data
 
-ASFLAGS := -mcpu=arm946e-s
-CFLAGS  := -Wall -Wextra -MMD -MP -mthumb -mthumb-interwork $(ASFLAGS) -fno-builtin -std=c11 -Wno-main -O2 -flto -ffast-math
+# ASFLAGS := -mcpu=arm946e-s
+# CFLAGS  := -Wall -Wextra -MMD -MP -mthumb -mthumb-interwork $(ASFLAGS) -fno-builtin -std=c99 -Wno-main -O2 -flto -ffast-math
+CFLAGS  := -Wall -Wextra -mthumb -mthumb-interwork -flto -flto -ffast-math -O2 -std=c99 -g -Wpedantic -Wcast-align -pedantic -march=armv5te -mtune=arm946e-s -fomit-frame-pointer
 LDFLAGS := -nostartfiles
+
+CFLAGS	+=	$(INCLUDE) -DEXEC_A9LH -DARM9
 
 objects = $(patsubst $(dir_source)/%.s, $(dir_build)/%.o, \
           $(patsubst $(dir_source)/%.c, $(dir_build)/%.o, \
