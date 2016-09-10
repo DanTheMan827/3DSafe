@@ -12,3 +12,5 @@ typedef volatile u8 vu8;
 typedef volatile u16 vu16;
 typedef volatile u32 vu32;
 typedef volatile u64 vu64;
+
+typedef int16_t s16;

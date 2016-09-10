@@ -9,6 +9,7 @@
 #include <string.h>
 #include "godmode.h"
 #include "otp.h"
+#include "fs.h"
 
 #define PAYLOAD_ADDRESS 0x23F00000
 #define A11_PAYLOAD_LOC 0x1FFF4C80 //keep in mind this needs to be changed in the ld script for arm11 too
@@ -364,6 +365,14 @@ int main()
 	if(!enterGodMode()) {
 		error("Could not gain access to SysNAND");
 	}
+	
+	clearScreens();
+	
+//Test image
+// 	drawImage("1:/bg.bin", 400, 240, 0, 0);
+// 	waitInput();
+// 	clearScreens();
+	
 	
 	/*
 	Try to read the PIN file from SysNAND
