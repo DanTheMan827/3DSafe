@@ -1,10 +1,13 @@
-#include "ui.h"
+// #include "ui.h"
 #include "fs.h"
 #include "virtual.h"
 #include "image.h"
 #include "sha.h"
 #include "sdmmc.h"
 #include "ff.h"
+// #include "utils.h"
+
+void error(const char *message);
 
 #define MAIN_BUFFER ((u8*)0x21200000)
 #define MAIN_BUFFER_SIZE (0x100000) // must be multiple of 0x200
@@ -126,7 +129,10 @@ void SetFSSearch(const char* pattern, const char* path) {
 int PathToNumFS(const char* path) {
     int fsnum = *path - (int) '0';
     if ((fsnum < 0) || (fsnum >= NORM_FS) || (path[1] != ':')) {
-        if (!GetVirtualSource(path) && !IsSearchDrive(path)) ShowPrompt(false, "Invalid path (%s)", path);
+        if (!GetVirtualSource(path) && !IsSearchDrive(path)) {
+        	error("Invalid path");
+//         	ShowPrompt(false, "Invalid path (%s)", path);
+        }
         return -1;
     }
     return fsnum;
@@ -146,57 +152,57 @@ uint64_t GetSDCardSize() {
     return (u64) getMMCDevice(1)->total_size * 512;
 }
 
-bool FormatSDCard(u64 hidden_mb, u32 cluster_size) {
-    u8 mbr[0x200] = { 0 };
-    u8 mbrdata[0x42] = {
-        0x80, 0x01, 0x01, 0x00, 0x0C, 0xFE, 0xFF, 0xFF, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-        0x80, 0x01, 0x01, 0x00, 0x1C, 0xFE, 0xFF, 0xFF, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-        0x55, 0xAA
-    };
-    u32 sd_size = getMMCDevice(1)->total_size;
-    u32 emu_sector = 1;
-    u32 emu_size = (u32) ((hidden_mb * 1024 * 1024) / 512);
-    u32 fat_sector = align(emu_sector + emu_size, 0x2000); // align to 4MB
-    u32 fat_size = (fat_sector < sd_size) ? sd_size - fat_sector : 0;
-    
-    // FAT size check
-    if (fat_size < 0x80000) { // minimum free space: 256MB
-        ShowPrompt(false, "ERROR: SD card is too small");
-        return false;
-    }
-    sd_size = fat_size;
-    
-    // build the MBR
-    memcpy(mbrdata + 0x08, &fat_sector, 4);
-    memcpy(mbrdata + 0x0C, &fat_size, 4);
-    memcpy(mbrdata + 0x18, &emu_sector, 4);
-    memcpy(mbrdata + 0x1C, &emu_size, 4);
-    memcpy(mbr + 0x1BE, mbrdata, 0x42);
-    if (hidden_mb) memcpy(mbr, "GATEWAYNAND", 12);
-    else memset(mbr + 0x1CE, 0, 0x10);
-    
-    // one last warning....
-    if (!ShowUnlockSequence(3, "!WARNING!\n \nProceeding will format this SD.\nThis will irreversibly delete\nALL data on it.\n"))
-        return false;
-    ShowString("Formatting SD, please wait..."); 
-    
-    // write the MBR to disk
-    // !this assumes a fully deinitialized file system!
-    if ((sdmmc_sdcard_init() != 0) || (sdmmc_sdcard_writesectors(0, 1, mbr) != 0)) {
-        ShowPrompt(false, "ERROR: SD card i/o failure");
-        return false;
-    }
-    
-    // format the SD card
-    f_mount(fs, "0:", 1);
-    UINT c_size = cluster_size;
-    bool ret = (f_mkfs("0:", FM_FAT32, c_size, MAIN_BUFFER, MAIN_BUFFER_SIZE) == FR_OK) && (f_setlabel("0:GM9SD") == FR_OK);
-    f_mount(NULL, "0:", 1);
-    
-    return ret;
-}
+// bool FormatSDCard(u64 hidden_mb, u32 cluster_size) {
+//     u8 mbr[0x200] = { 0 };
+//     u8 mbrdata[0x42] = {
+//         0x80, 0x01, 0x01, 0x00, 0x0C, 0xFE, 0xFF, 0xFF, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+//         0x80, 0x01, 0x01, 0x00, 0x1C, 0xFE, 0xFF, 0xFF, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+//         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+//         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+//         0x55, 0xAA
+//     };
+//     u32 sd_size = getMMCDevice(1)->total_size;
+//     u32 emu_sector = 1;
+//     u32 emu_size = (u32) ((hidden_mb * 1024 * 1024) / 512);
+//     u32 fat_sector = align(emu_sector + emu_size, 0x2000); // align to 4MB
+//     u32 fat_size = (fat_sector < sd_size) ? sd_size - fat_sector : 0;
+//     
+//     // FAT size check
+//     if (fat_size < 0x80000) { // minimum free space: 256MB
+//         ShowPrompt(false, "ERROR: SD card is too small");
+//         return false;
+//     }
+//     sd_size = fat_size;
+//     
+//     // build the MBR
+//     memcpy(mbrdata + 0x08, &fat_sector, 4);
+//     memcpy(mbrdata + 0x0C, &fat_size, 4);
+//     memcpy(mbrdata + 0x18, &emu_sector, 4);
+//     memcpy(mbrdata + 0x1C, &emu_size, 4);
+//     memcpy(mbr + 0x1BE, mbrdata, 0x42);
+//     if (hidden_mb) memcpy(mbr, "GATEWAYNAND", 12);
+//     else memset(mbr + 0x1CE, 0, 0x10);
+//     
+//     // one last warning....
+//     if (!ShowUnlockSequence(3, "!WARNING!\n \nProceeding will format this SD.\nThis will irreversibly delete\nALL data on it.\n"))
+//         return false;
+//     ShowString("Formatting SD, please wait..."); 
+//     
+//     // write the MBR to disk
+//     // !this assumes a fully deinitialized file system!
+//     if ((sdmmc_sdcard_init() != 0) || (sdmmc_sdcard_writesectors(0, 1, mbr) != 0)) {
+//         ShowPrompt(false, "ERROR: SD card i/o failure");
+//         return false;
+//     }
+//     
+//     // format the SD card
+//     f_mount(fs, "0:", 1);
+//     UINT c_size = cluster_size;
+//     bool ret = (f_mkfs("0:", FM_FAT32, c_size, MAIN_BUFFER, MAIN_BUFFER_SIZE) == FR_OK) && (f_setlabel("0:GM9SD") == FR_OK);
+//     f_mount(NULL, "0:", 1);
+//     
+//     return ret;
+// }
 
 bool CheckWritePermissions(const char* path) {
     char area_name[16];
@@ -242,69 +248,69 @@ bool CheckWritePermissions(const char* path) {
     return SetWritePermissions(perm, true);
 }
 
-bool SetWritePermissions(u32 perm, bool add_perm) {
-    if ((write_permissions & perm) == perm) { // write permissions already given
-        if (!add_perm) write_permissions = perm;
-        return true;
-    }
-    
-    switch (perm) {
-        case PERM_BASE:
-            if (!ShowUnlockSequence(1, "You want to enable base\nwriting permissions."))
-                return false;
-            break;
-        case PERM_SDCARD:
-            if (!ShowUnlockSequence(1, "You want to enable SD card\nwriting permissions."))
-                return false;
-            break;
-        case PERM_RAMDRIVE:
-            if (!ShowUnlockSequence(1, "You want to enable RAM drive\nwriting permissions."))
-                return false;
-        case PERM_EMUNAND:
-            if (!ShowUnlockSequence(2, "You want to enable EmuNAND\nwriting permissions."))
-                return false;
-            break;
-        case PERM_IMAGE:
-            if (!ShowUnlockSequence(2, "You want to enable image\nwriting permissions."))
-                return false;
-            break;
-        #ifndef SAFEMODE
-        case PERM_SYSNAND:
-            if (!ShowUnlockSequence(3, "!Better be careful!\n \nYou want to enable SysNAND\nwriting permissions.\nThis enables you to do some\nreally dangerous stuff!"))
-                return false;
-            break;
-        case PERM_A9LH:
-            if (!ShowUnlockSequence(5, "!THIS IS YOUR ONLY WARNING!\n \nYou want to enable A9LH area\nwriting permissions.\nThis enables you to OVERWRITE\nyour A9LH installation!"))
-                return false;
-            break;
-        case PERM_MEMORY:
-            if (!ShowUnlockSequence(4, "!Better be careful!\n \nYou want to enable memory\nwriting permissions.\nWriting to certain areas may\nlead to unexpected results."))
-                return false;
-            break;
-        case PERM_ALL:
-            if (!ShowUnlockSequence(3, "!Better be careful!\n \nYou want to enable ALL\nwriting permissions.\nThis enables you to do some\nreally dangerous stuff!"))
-                return false;
-            break;
-        default:
-            return false;
-            break;
-        #else
-        case PERM_ALL:
-            perm &= ~(PERM_SYSNAND|PERM_MEMORY);
-            if (!ShowUnlockSequence(2, "You want to enable EmuNAND &\nimage writing permissions.\nKeep backups, just in case."))
-                return false;
-            break;
-        default:
-            ShowPrompt(false, "Can't unlock write permission.\nTry GodMode9 instead!");
-            return false;
-            break;
-        #endif
-    }
-    
-    write_permissions = add_perm ? write_permissions | perm : perm;
-    
-    return true;
-}
+// bool SetWritePermissions(u32 perm, bool add_perm) {
+//     if ((write_permissions & perm) == perm) { // write permissions already given
+//         if (!add_perm) write_permissions = perm;
+//         return true;
+//     }
+//     
+//     switch (perm) {
+//         case PERM_BASE:
+//             if (!ShowUnlockSequence(1, "You want to enable base\nwriting permissions."))
+//                 return false;
+//             break;
+//         case PERM_SDCARD:
+//             if (!ShowUnlockSequence(1, "You want to enable SD card\nwriting permissions."))
+//                 return false;
+//             break;
+//         case PERM_RAMDRIVE:
+//             if (!ShowUnlockSequence(1, "You want to enable RAM drive\nwriting permissions."))
+//                 return false;
+//         case PERM_EMUNAND:
+//             if (!ShowUnlockSequence(2, "You want to enable EmuNAND\nwriting permissions."))
+//                 return false;
+//             break;
+//         case PERM_IMAGE:
+//             if (!ShowUnlockSequence(2, "You want to enable image\nwriting permissions."))
+//                 return false;
+//             break;
+//         #ifndef SAFEMODE
+//         case PERM_SYSNAND:
+//             if (!ShowUnlockSequence(3, "!Better be careful!\n \nYou want to enable SysNAND\nwriting permissions.\nThis enables you to do some\nreally dangerous stuff!"))
+//                 return false;
+//             break;
+//         case PERM_A9LH:
+//             if (!ShowUnlockSequence(5, "!THIS IS YOUR ONLY WARNING!\n \nYou want to enable A9LH area\nwriting permissions.\nThis enables you to OVERWRITE\nyour A9LH installation!"))
+//                 return false;
+//             break;
+//         case PERM_MEMORY:
+//             if (!ShowUnlockSequence(4, "!Better be careful!\n \nYou want to enable memory\nwriting permissions.\nWriting to certain areas may\nlead to unexpected results."))
+//                 return false;
+//             break;
+//         case PERM_ALL:
+//             if (!ShowUnlockSequence(3, "!Better be careful!\n \nYou want to enable ALL\nwriting permissions.\nThis enables you to do some\nreally dangerous stuff!"))
+//                 return false;
+//             break;
+//         default:
+//             return false;
+//             break;
+//         #else
+//         case PERM_ALL:
+//             perm &= ~(PERM_SYSNAND|PERM_MEMORY);
+//             if (!ShowUnlockSequence(2, "You want to enable EmuNAND &\nimage writing permissions.\nKeep backups, just in case."))
+//                 return false;
+//             break;
+//         default:
+//             ShowPrompt(false, "Can't unlock write permission.\nTry GodMode9 instead!");
+//             return false;
+//             break;
+//         #endif
+//     }
+//     
+//     write_permissions = add_perm ? write_permissions | perm : perm;
+//     
+//     return true;
+// }
 
 u32 GetWritePermissions() {
     return write_permissions;
@@ -389,7 +395,7 @@ bool FileGetSha256(const char* path, u8* sha256) {
     bool ret = true;
     
     sha_init(SHA256_MODE);
-    ShowProgress(0, 0, path);
+//     ShowProgress(0, 0, path);
     if (GetVirtualSource(path)) { // for virtual files
         VirtualFile vfile;
         u32 fsize;
@@ -880,7 +886,7 @@ bool PathCopy(const char* destdir, const char* orig, u32* flags) {
     if (GetVirtualSource(destdir) || GetVirtualSource(orig)) {
         // users are inventive...
         if ((PathToNumFS(orig) > 0) && GetVirtualSource(destdir)) {
-            ShowPrompt(false, "Only files from SD card are accepted");
+//             ShowPrompt(false, "Only files from SD card are accepted");
             return false;
         }
         return PathCopyVirtual(destdir, orig, flags);
@@ -982,34 +988,34 @@ bool DirCreate(const char* cpath, const char* dirname) {
     return (f_mkdir(npath) == FR_OK);
 }
 
-void CreateScreenshot() {
-    const u8 bmp_header[54] = {
-        0x42, 0x4D, 0x36, 0xCA, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x36, 0x00, 0x00, 0x00, 0x28, 0x00,
-        0x00, 0x00, 0x90, 0x01, 0x00, 0x00, 0xE0, 0x01, 0x00, 0x00, 0x01, 0x00, 0x18, 0x00, 0x00, 0x00,
-        0x00, 0x00, 0x00, 0xCA, 0x08, 0x00, 0x12, 0x0B, 0x00, 0x00, 0x12, 0x0B, 0x00, 0x00, 0x00, 0x00,
-        0x00, 0x00, 0x00, 0x00, 0x00, 0x00
-    };
-    u8* buffer = MAIN_BUFFER + 54;
-    u8* buffer_t = buffer + (400 * 240 * 3);
-    char filename[16];
-    static u32 n = 0;
-    
-    for (; n < 1000; n++) {
-        snprintf(filename, 16, "0:/snap%03i.bmp", (int) n);
-        if (f_stat(filename, NULL) != FR_OK) break;
-    }
-    if (n >= 1000) return;
-    
-    memcpy(MAIN_BUFFER, bmp_header, 54);
-    memset(buffer, 0x1F, 400 * 240 * 3 * 2);
-    for (u32 x = 0; x < 400; x++)
-        for (u32 y = 0; y < 240; y++)
-            memcpy(buffer_t + (y*400 + x) * 3, TOP_SCREEN + (x*240 + y) * 3, 3);
-    for (u32 x = 0; x < 320; x++)
-        for (u32 y = 0; y < 240; y++)
-            memcpy(buffer + (y*400 + x + 40) * 3, BOT_SCREEN + (x*240 + y) * 3, 3);
-    FileSetData(filename, MAIN_BUFFER, 54 + (400 * 240 * 3 * 2), 0, true);
-}
+// void CreateScreenshot() {
+//     const u8 bmp_header[54] = {
+//         0x42, 0x4D, 0x36, 0xCA, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x36, 0x00, 0x00, 0x00, 0x28, 0x00,
+//         0x00, 0x00, 0x90, 0x01, 0x00, 0x00, 0xE0, 0x01, 0x00, 0x00, 0x01, 0x00, 0x18, 0x00, 0x00, 0x00,
+//         0x00, 0x00, 0x00, 0xCA, 0x08, 0x00, 0x12, 0x0B, 0x00, 0x00, 0x12, 0x0B, 0x00, 0x00, 0x00, 0x00,
+//         0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+//     };
+//     u8* buffer = MAIN_BUFFER + 54;
+//     u8* buffer_t = buffer + (400 * 240 * 3);
+//     char filename[16];
+//     static u32 n = 0;
+//     
+//     for (; n < 1000; n++) {
+//         snprintf(filename, 16, "0:/snap%03i.bmp", (int) n);
+//         if (f_stat(filename, NULL) != FR_OK) break;
+//     }
+//     if (n >= 1000) return;
+//     
+//     memcpy(MAIN_BUFFER, bmp_header, 54);
+//     memset(buffer, 0x1F, 400 * 240 * 3 * 2);
+//     for (u32 x = 0; x < 400; x++)
+//         for (u32 y = 0; y < 240; y++)
+//             memcpy(buffer_t + (y*400 + x) * 3, TOP_SCREEN + (x*240 + y) * 3, 3);
+//     for (u32 x = 0; x < 320; x++)
+//         for (u32 y = 0; y < 240; y++)
+//             memcpy(buffer + (y*400 + x + 40) * 3, BOT_SCREEN + (x*240 + y) * 3, 3);
+//     FileSetData(filename, MAIN_BUFFER, 54 + (400 * 240 * 3 * 2), 0, true);
+// }
 
 void DirEntryCpy(DirEntry* dest, const DirEntry* orig) {
     memcpy(dest, orig, sizeof(DirEntry));
@@ -1195,13 +1201,13 @@ void SearchDirContents(DirStruct* contents, const char* path, const char* patter
     }
 }
 
-void GetDirContents(DirStruct* contents, const char* path) {
-    if (*search_pattern && *search_path && IsSearchDrive(path)) {
-        ShowString("Searching, please wait...");
-        SearchDirContents(contents, search_path, search_pattern, true);
-        ClearScreenF(true, false, COLOR_STD_BG);
-    } else SearchDirContents(contents, path, NULL, false);
-}
+// void GetDirContents(DirStruct* contents, const char* path) {
+//     if (*search_pattern && *search_path && IsSearchDrive(path)) {
+//         ShowString("Searching, please wait...");
+//         SearchDirContents(contents, search_path, search_pattern, true);
+//         ClearScreenF(true, false, COLOR_STD_BG);
+//     } else SearchDirContents(contents, path, NULL, false);
+// }
 
 uint64_t GetFreeSpace(const char* path)
 {

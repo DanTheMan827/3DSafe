@@ -7,6 +7,7 @@
 #include "crypto.h"
 #include "memory.h"
 #include "nand/sdmmc.h"
+#include <string.h>
 
 /****************************************************************
 *                   Crypto Libs

@@ -50,13 +50,13 @@ void SetFSSearch(const char* pattern, const char* path);
 uint64_t GetSDCardSize();
 
 /** Format the SD card **/
-bool FormatSDCard(u64 hidden_mb, u32 cluster_size);
+// bool FormatSDCard(u64 hidden_mb, u32 cluster_size);
 
 /** Check if writing to this path is allowed **/
 bool CheckWritePermissions(const char* path);
 
 /** Set new write permissions */
-bool SetWritePermissions(u32 perm, bool add_perm);
+// bool SetWritePermissions(u32 perm, bool add_perm);
 
 /** Get write permissions */
 u32 GetWritePermissions();
@@ -95,13 +95,13 @@ bool PathRename(const char* path, const char* newname);
 bool DirCreate(const char* cpath, const char* dirname);
 
 /** Create a screenshot of the current framebuffer **/
-void CreateScreenshot();
+// void CreateScreenshot();
 
 /** Search under a given path **/
 void SearchDirContents(DirStruct* contents, const char* path, const char* pattern, bool recursive);
 
 /** Get directory content under a given path **/
-void GetDirContents(DirStruct* contents, const char* path);
+// void GetDirContents(DirStruct* contents, const char* path);
 
 /** Gets remaining space in filesystem in bytes */
 uint64_t GetFreeSpace(const char* path);
