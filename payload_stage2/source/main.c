@@ -76,7 +76,7 @@ void bootPayload();
 /*
 Prompt the user to enter a new PIN
 */
-void setNewPIN() {
+void setNewPIN(bool force) {
 	//Flag to keep us inside the while loop to keep entering characters
 	u32 getPIN = 1;
 	//Buffer for the entered values
@@ -106,7 +106,23 @@ void setNewPIN() {
 		If the user presses START, break out of the while loop
 		*/
 		if (key == BUTTON_START) {
-			getPIN = 0;
+			if (pinPos == 0) {
+				clearScreens();
+			
+				if (force) {
+					continue;
+				}
+				else {
+					drawString("Your PIN was not changed", 10, 10, COLOR_RED);
+					drawString("Press any key to continue", 10, 30, COLOR_WHITE);
+					waitInput();
+					displayOptions();
+					return;
+				}
+			}
+			else {
+				getPIN = 0;
+			}
 		}
 		
 		/*
@@ -244,7 +260,7 @@ void displayOptions() {
 	User opted to change the PIN
 	*/
 	else if (key == BUTTON_A) {
-		setNewPIN();
+		setNewPIN(false);
 	}
 	
 	/*
@@ -382,7 +398,7 @@ int main()
     
     if (!getPINFromNAND(pin)) {
 	    //If no PIN could be read from NAND, try creating a new one
-    	setNewPIN();
+    	setNewPIN(true);
     	
     	//If we still can't get a PIN from NAND, show an error and die
     	if (!getPINFromNAND(pin)) {	

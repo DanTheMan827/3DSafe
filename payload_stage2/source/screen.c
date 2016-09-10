@@ -140,7 +140,9 @@ void drawImage(char * path, u16 width, u16 height, s16 x, s16 y) {
 		return;
 	
 	//Width of columns for reading image into memory in chunks
-	int colWidth = 40;
+	int maxColWidth = 40;
+	int colWidth = maxColWidth;
+	if (width < colWidth) colWidth = width;
 
 	//Size of data to read in each read operation
 	size_t readSize = colWidth * 3;
@@ -153,7 +155,11 @@ void drawImage(char * path, u16 width, u16 height, s16 x, s16 y) {
 	*/
 	for (int row=0; row<height; row++) {
 		//Work out how many columns are needed by dividing the image by the column width
-		int cols = width/colWidth;
+		int cols;
+		if (colWidth < maxColWidth)
+			cols = 1;
+		else
+			cols = width/colWidth;
 		
 		/*
 		For each chunk of pixels in this row
