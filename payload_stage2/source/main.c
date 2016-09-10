@@ -208,6 +208,7 @@ void displayOptions() {
 		drawString("START: Boot payload", 10, 30, COLOR_WHITE);
 		drawString("    A: Change PIN", 10, 40, COLOR_WHITE);
 		drawString("    B: Power off", 10, 50, COLOR_WHITE);
+		drawString("    X: SafeA9LHInstaller", 10, 60, COLOR_WHITE);
 
 		//Wait for input
 		key = waitInput();
@@ -215,7 +216,7 @@ void displayOptions() {
 		/*
 		If the button pressed corresponds to a menu option, break out of the while loop
 		*/
-		if (key == BUTTON_START || key == BUTTON_A || key == BUTTON_B) {
+		if (key == BUTTON_START || key == BUTTON_A || key == BUTTON_B || key == BUTTON_X) {
 			validOption = 1;
 		}
 	}
@@ -250,6 +251,14 @@ void displayOptions() {
 	*/
 	else if (key == BUTTON_B) {
 		mcuShutDown();
+	}
+	
+	/*
+	User opted to run SafeA9LHInstaller
+	*/
+	else if (key == BUTTON_X) {
+		sa9lhi();
+		displayOptions();
 	}
 }
 
