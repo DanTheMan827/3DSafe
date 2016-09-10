@@ -40,4 +40,4 @@ This project is based on ShadowNAND by @RShadowhand, from which it is forked. Al
 * fatfs (modified to mount/read/write 3DS NAND partitions)
 * nand
 
-3DSafe also includes OTP verification routines from SafeA9LHInstaller by AuroraWright.
+3DSafe also includes an integrated version of SafeA9LHInstaller by AuroraWright.
