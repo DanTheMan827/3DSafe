@@ -384,7 +384,11 @@ int main()
 	
 	clearScreens();
 	
-//Test image
+//Test images
+// 	drawImage("0:/logo.bin", 192, 192, 50, 10);
+// 	waitInput();
+// 	clearScreens();
+// 	
 // 	drawImage("1:/bg.bin", 400, 240, 0, 0);
 // 	waitInput();
 // 	clearScreens();
