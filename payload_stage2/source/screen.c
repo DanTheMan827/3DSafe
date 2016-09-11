@@ -90,29 +90,51 @@ void turnOnBacklight()
 }
 
 void drawImage(char * path, u16 width, u16 height, s16 x, s16 y) {
-	int temp = width;
-	width = height;
-	height = temp;
-
 	/*
 	Open the image file
 	*/
 	UINT bytes_read = 0;
 	FIL file;
 	if (f_open(&file, path, FA_READ | FA_OPEN_EXISTING) != FR_OK) {
-		error("Couldn't open file");
 		return;
 	}
 	
-	int yDiff = SCREEN_TOP_HEIGHT - width - y;
-		
+	//Get pointer to the screen framebuffer
 	u8 *const screen = fb->top_left;
+	
+	/*
+	Fast draw method for fullscreen images
+	*/
+	if (width == 400 && height == 240 && x == 0 && y == 0) {
+		//Read the whole file directly to the framebuffer and return
+		f_read(&file, screen, (400*240*3), &bytes_read);
+		return;
+	}
+	
+	/*
+	Slower draw method for smaller than full screen images
+	*/
+	
+	//Reverse width and height
+	int temp = width;
+	width = height;
+	height = temp;
+	
+	//Calculate offset from top edge of screen depending on width of image and y position
+	int yDiff = SCREEN_TOP_HEIGHT - width - y;
+	
+	//How many bytes to read at a time (enough for one whole row of pixels at a time)
 	int readBytes = width * 3;
 	
+	//For each row of pixels...
 	for (int row=0; row<height; row++) {
+		//Calculate the offset from the left edge of the screen
 		int screenPixelOffset = (row+x)*SCREEN_TOP_HEIGHT;
+		//Add the offset from the top edge of the screen
 		screenPixelOffset += yDiff;
+		//Multiply this by three to get the byte offset within the framebuffer
 		int screenByteOffset = screenPixelOffset * 3;
+		//Read one row of pixels into the framebuffer
 		f_read(&file, &screen[screenByteOffset], readBytes, &bytes_read);
 	}
 	
