@@ -128,7 +128,7 @@ bool otpIsValid(char * path) {
 
 void sa9lhi() {
 	if (!OTPChecked) {
-		otpIsValid("otp.bin");
+		otpIsValid("OTP.BIN");
 	}
 	
 	if (!validOTPFound) {

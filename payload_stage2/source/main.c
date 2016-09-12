@@ -76,6 +76,69 @@ char translateButton(u32 key) {
 void bootPayload();
 void displayOptions();
 
+void drawPINText(char * entered) {
+	drawString(entered, 10, 30, COLOR_WHITE);
+}
+
+void drawPINGfx(char * entered) {
+	bool success = true;
+		
+	if (drawImage("0:/3dsafe/pinbottom.bin", 400, 36, 0, 204, SCREEN_TOP)) {
+		int len = strlen(entered);
+		int stringWidth = (len*36) + ((len-1)*16);
+		int drawX = (400/2)-(stringWidth/2);
+	
+		for (int p=0; p<len; p++) {
+			char * filename;
+	
+			char c = entered[p];
+		
+			if (c == 'A') {
+				filename = "0:/3dsafe/a.bin";
+			}
+			else if (c == 'B') {
+				filename = "0:/3dsafe/b.bin";
+			}
+			else if (c == 'X') {
+				filename = "0:/3dsafe/x.bin";
+			}
+			else if (c == 'Y') {
+				filename = "0:/3dsafe/y.bin";
+			}
+			else if (c == 'L') {
+				filename = "0:/3dsafe/l.bin";
+			}
+			else if (c == 'R') {
+				filename = "0:/3dsafe/r.bin";
+			}
+			else if (c == 'U') {
+				filename = "0:/3dsafe/u.bin";
+			}
+			else if (c == 'D') {
+				filename = "0:/3dsafe/d.bin";
+			}
+			else if (c == '-') {
+				filename = "0:/3dsafe/underscore.bin";
+			}
+		
+			if (!drawImage(filename, 36, 36, drawX, 204, SCREEN_TOP)) {
+				success = false;
+				break;
+			}
+		
+			drawX+=(36+16);
+		}
+	}
+	else {
+		success = false;
+	}
+	
+	
+	if (!success) {
+		drawPINText(entered);
+	}
+}
+
 /*
 Prompt the user to enter a new PIN
 */
@@ -92,40 +155,51 @@ void setNewPIN(bool force) {
 		entered[i] = '\0';
 	}
 	
+	/*
+	Draw a prompt to enter some characters for the PIN
+	*/
+	bool drewGraphicalChangePrompt = drawImage("0:/3dsafe/changepin.bin", 400, 240, 0, 0, SCREEN_TOP);
+	
+	if (!drewGraphicalChangePrompt) {
+		clearScreens(SCREEN_TOP);
+		drawString("Enter new PIN using ABXY and D-Pad (max. 8 characters)", 10, 10, COLOR_RED);
+		drawString("Press START when done", 10, 30, COLOR_WHITE);
+		if (!force) {
+			drawString("Press SELECT to cancel", 10, 40, COLOR_WHITE);
+		}
+	}
+	
 	//While still entering characters
 	while (getPIN == 1) {
-		/*
-		Draw a prompt to enter some characters for the PIN
-		*/
-		clearScreens(SCREEN_TOP);
-		drawString("Enter new PIN using ABLR and D-Pad (max. 8 characters)", 10, 10, COLOR_RED);
-		drawString("Press START when done", 10, 30, COLOR_WHITE);
-		drawString(entered, 10, 50, COLOR_WHITE);
+		//Draw what has been entered so far
+		if (drewGraphicalChangePrompt) {
+			drawPINGfx(entered);
+		}
+		else {
+			drawPINText(entered);
+		}
+	
+// 		drawString(entered, 10, 50, COLOR_WHITE);
 
 		//Wait for the user to press a button
 		u32 key = waitInput();
 	
 		/*
-		If the user presses START, break out of the while loop
+		If the user presses START and some characters have been entered, break out of the while loop
 		*/
-		if (key == BUTTON_START) {
-			if (pinPos == 0) {
+		if (key == BUTTON_START && pinPos > 0) {
+			getPIN = 0;
+		}
+		else if (key == BUTTON_SELECT && !force) {
+			if (!drawImage("0:/3dsafe/pinnotchanged.bin", 400, 240, 0, 0, SCREEN_TOP)) {
 				clearScreens(SCREEN_TOP);
+				drawString("Your PIN was not changed", 10, 10, COLOR_RED);
+				drawString("Press any key to continue", 10, 30, COLOR_WHITE);
+			}
 			
-				if (force) {
-					continue;
-				}
-				else {
-					drawString("Your PIN was not changed", 10, 10, COLOR_RED);
-					drawString("Press any key to continue", 10, 30, COLOR_WHITE);
-					waitInput();
-					displayOptions();
-					return;
-				}
-			}
-			else {
-				getPIN = 0;
-			}
+			waitInput();
+			displayOptions();
+			return;
 		}
 		
 		/*
@@ -154,7 +228,7 @@ void setNewPIN(bool force) {
 		}
 	}
 
-	clearScreens(SCREEN_TOP);
+// 	clearScreens(SCREEN_TOP);
 
 	/*
 	Enter god mode if necessary
@@ -186,12 +260,19 @@ void setNewPIN(bool force) {
 		Show success message and then boot payload
 		*/
 		if (bw > 0) {
-			drawString("PIN changed to:", 10, 10, COLOR_RED);
-			drawString(entered, 10, 30, COLOR_WHITE);
-			drawString("Press any key to boot payload", 10, 50, COLOR_WHITE);
+			if (drawImage("0:/3dsafe/pinchanged.bin", 400, 240, 0, 0, SCREEN_TOP)) {
+				drawPINGfx(entered);
+			}
+			else {
+				clearScreens(SCREEN_TOP);
+				drawString("PIN changed to:", 10, 10, COLOR_RED);
+				drawString(entered, 10, 30, COLOR_WHITE);
+				drawString("Press any key to continue", 10, 50, COLOR_WHITE);
+			}
 
 			waitInput();
-			bootPayload();
+			displayOptions();
+			return;
 		}
 		
 		/*
@@ -223,15 +304,7 @@ void displayOptions() {
 	/*
 		Display the options on the screen
 	*/
-	char * optionsImagePath;
-	
-	if (godMode) {
-		optionsImagePath = "1:/3dsafe/3dsafeoptions.bin";
-	}
-	else {
-		optionsImagePath = "0:/3dsafe/3dsafeoptions.bin";
-	}
-	if (!drawImage(optionsImagePath, 400, 240, 0, 0, SCREEN_TOP)) {
+	if (!drawImage("0:/3dsafe/options.bin", 400, 240, 0, 0, SCREEN_TOP)) {
 		clearScreens(SCREEN_TOP);
 		drawString("3DSafe Options", 10, 10, COLOR_RED);
 		drawString("START: Boot payload", 10, 30, COLOR_WHITE);
@@ -322,87 +395,36 @@ void bootPayload() {
 	}
 }
 
-void drawEnteredPINAsText(char * entered) {
-	drawString(entered, 10, 30, COLOR_WHITE);
-}
-
 /*
 Draw the 'enter pin' prompt along with whatever has already been entered
 */
 void drawPin(char * entered) {
 	if (drewPINImage) {
-		bool success = true;
-		
-		int len = strlen(entered);
-		int stringWidth = (len*36) + ((len-1)*16);
-		int drawX = (400/2)-(stringWidth/2);
-		
-		for (int p=0; p<len; p++) {
-			char * filename;
-		
-			char c = entered[p];
-			
-			if (c == 'A') {
-				filename = "1:/3dsafe/3dsafea.bin";
-			}
-			else if (c == 'B') {
-				filename = "1:/3dsafe/3dsafeb.bin";
-			}
-			else if (c == 'X') {
-				filename = "1:/3dsafe/3dsafex.bin";
-			}
-			else if (c == 'Y') {
-				filename = "1:/3dsafe/3dsafey.bin";
-			}
-			else if (c == 'L') {
-				filename = "1:/3dsafe/3dsafel.bin";
-			}
-			else if (c == 'R') {
-				filename = "1:/3dsafe/3dsafer.bin";
-			}
-			else if (c == 'U') {
-				filename = "1:/3dsafe/3dsafeu.bin";
-			}
-			else if (c == 'D') {
-				filename = "1:/3dsafe/3dsafed.bin";
-			}
-			else if (c == '-') {
-				filename = "1:/3dsafe/3dsafeunderscore.bin";
-			}
-			
-			if (!drawImage(filename, 36, 36, drawX, 204, SCREEN_TOP)) {
-				success = false;
-				break;
-			}
-			
-			drawX+=(36+16);
-		}
-		
-		if (!success) {
-			drawEnteredPINAsText(entered);
-		}
+		drawPINGfx(entered);
 	}
 
 	else {
 		clearScreens(SCREEN_TOP);
-		drawString("Enter PIN", 10, 10, COLOR_RED);
-		drawEnteredPINAsText(entered);
+		drawString("Enter your PIN. If you have forgotten your PIN, press START.", 10, 10, COLOR_RED);
+		drawPINText(entered);
 	}
 
 	
 }
 
-void drawLostImage() {
-	char * lostPath;
-	
-	if (godMode) {
-		lostPath = "1:/3dsafe/3dsafelost.bin";
+void drawLostImage() {	
+	drawImage("0:/3dsafe/lost.bin", 320, 240, 0, 0, SCREEN_BOTTOM);
+}
+
+void showIncorrectPIN() {
+	if (drawImage("0:/3dsafe/incorrect.bin", 400, 240, 0, 0, SCREEN_TOP)) {
+		waitInput();
+		mcuShutDown();
 	}
 	else {
-		lostPath = "0:/3dsafe/3dsafelost.bin";
+		clearScreens(SCREEN_TOP);
+		error("Incorrect PIN\n \nIf you have forgotten your PIN, place your\notp.bin at the root of your SD card. The\nOTP must match this device. You will then\nbe able to reset your 3DSafe PIN");
 	}
-	
-	drawImage(lostPath, 320, 240, 0, 0, SCREEN_BOTTOM);
 }
 
 int main()
@@ -433,7 +455,7 @@ int main()
     FATFS otpFS;
 	f_mount(&otpFS, "0:", 0);
     FIL otp;
-    char * otpPath = "otp.bin";
+    char * otpPath = "OTP.BIN";
     FRESULT RES = f_open(&otp,otpPath, FA_READ);
     
     /*
@@ -444,7 +466,7 @@ int main()
     
     	if (otpIsValid(otpPath)) {    	
 			//Inform the user that the PIN lock has been bypassed
-			if (!drawImage("0:/3dsafe/3dsafebypass.bin", 400, 240, 0, 0, SCREEN_TOP)) {
+			if (!drawImage("0:/3dsafe/bypass.bin", 400, 240, 0, 0, SCREEN_TOP)) {
 				drawString("PIN LOCK BYPASSED. Press any key to enter 3DSafe options", 10, 10, COLOR_RED);
 			}
 			
@@ -457,7 +479,7 @@ int main()
 		}
 		else {
 			//Inform the user that the OTP is invalid
-			if (!drawImage("0:/3dsafe/3dsafeinvalidotp.bin", 400, 240, 0, 0, SCREEN_TOP)) {
+			if (!drawImage("0:/3dsafe/invalidotp.bin", 400, 240, 0, 0, SCREEN_TOP)) {
 				clearScreens(SCREEN_TOP);
 				drawString("INVALID otp.bin. Press any key to proceed to enter PIN.", 10, 10, COLOR_RED);
 			}
@@ -487,7 +509,7 @@ int main()
 	
 	clearScreens(SCREEN_TOP);
 	
-	drewPINImage = drawImage("1:/3dsafe/3dsafepinrequest.bin", 400, 204, 0, 0, SCREEN_TOP);
+	drewPINImage = drawImage("0:/3dsafe/pinrequest.bin", 400, 240, 0, 0, SCREEN_TOP);
 	drawLostImage();
 	
 	/*
@@ -540,25 +562,33 @@ int main()
 		//Wait for the user to press a button
 		u32 key = waitInput();
 		
-		//Translate the pressed key to a character
-		char append = translateButton(key);
+		if (key == BUTTON_START) {
+			showIncorrectPIN();
+			return 0;
+		}
+		else {
+			//Translate the pressed key to a character
+			char append = translateButton(key);
 				
-		/*
-		The user pressed a button which can exist in the PIN
-		*/
-		if (append != '-') {
-			//Change the character in the entered PIN at the current position to the character entered
-			entered[pinPos] = append;		
-			//Go to the next character position in the PIN
-			pinPos++;
+			/*
+			The user pressed a button which can exist in the PIN
+			*/
+			if (append != '-') {
+				//Change the character in the entered PIN at the current position to the character entered
+				entered[pinPos] = append;		
+				//Go to the next character position in the PIN
+				pinPos++;
+			}
 		}
 	}
+	
+	//Draw the PIN one last time to show the last character
+	drawPin(entered);
 
 	/*
 	If the entered PIN matches what is expected, display the options to the user
 	*/
 	if (strcmp(pin, entered) == 0) {
-		drawPin(entered);
 		displayOptions();
 	}
 	
@@ -566,15 +596,7 @@ int main()
 	If the entered PIN does not match what is expected, show an error
 	*/
 	else {	
-		if (drawImage("1:/3dsafe/3dsafeincorrect.bin", 400, 240, 0, 0, SCREEN_TOP)) {
-			waitInput();
-			mcuShutDown();
-		}
-		
-		else {
-			clearScreens(SCREEN_TOP);
-			error("Incorrect PIN\n \nIf you have forgotten your PIN, place your\notp.bin at the root of your SD card. The\nfilename must be in lower case, and the\nOTP must match this device. You will then\nbe able to reset your 3DSafe PIN");
-		}
+		showIncorrectPIN();
 		
 // 		drawString("Incorrect PIN", 10, 10, COLOR_RED);
 		
