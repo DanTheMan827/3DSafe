@@ -218,18 +218,29 @@ void displayOptions() {
 	u32 key;
 	//Stay in the while loop until a valid option was selected
 	u32 validOption = 0;
-
-	while (validOption == 0) {
-		/*
+	
+	
+	/*
 		Display the options on the screen
-		*/
+	*/
+	char * optionsImagePath;
+	
+	if (godMode) {
+		optionsImagePath = "1:/3dsafe/3dsafeoptions.bin";
+	}
+	else {
+		optionsImagePath = "0:/3dsafe/3dsafeoptions.bin";
+	}
+	if (!drawImage(optionsImagePath, 400, 240, 0, 0, SCREEN_TOP)) {
 		clearScreens(SCREEN_TOP);
 		drawString("3DSafe Options", 10, 10, COLOR_RED);
 		drawString("START: Boot payload", 10, 30, COLOR_WHITE);
 		drawString("    A: Change PIN", 10, 40, COLOR_WHITE);
 		drawString("    B: Power off", 10, 50, COLOR_WHITE);
 		drawString("    X: SafeA9LHInstaller", 10, 60, COLOR_WHITE);
+	}
 
+	while (validOption == 0) {
 		//Wait for input
 		key = waitInput();
 		
@@ -381,6 +392,19 @@ void drawPin(char * entered) {
 	
 }
 
+void drawLostImage() {
+	char * lostPath;
+	
+	if (godMode) {
+		lostPath = "1:/3dsafe/3dsafelost.bin";
+	}
+	else {
+		lostPath = "0:/3dsafe/3dsafelost.bin";
+	}
+	
+	drawImage(lostPath, 320, 240, 0, 0, SCREEN_BOTTOM);
+}
+
 int main()
 {
     /*
@@ -411,15 +435,19 @@ int main()
     FIL otp;
     char * otpPath = "otp.bin";
     FRESULT RES = f_open(&otp,otpPath, FA_READ);
-    f_mount(NULL, "0:", 0);
     
     /*
     An otp.bin was found. Check if it is valid for this console
     */
     if(RES == FR_OK) {
-    	if (otpIsValid(otpPath)) {
+    	drawLostImage();
+    
+    	if (otpIsValid(otpPath)) {    	
 			//Inform the user that the PIN lock has been bypassed
-			drawString("PIN LOCK BYPASSED. Press any key to enter 3DSafe options", 10, 10, COLOR_RED);
+			if (!drawImage("0:/3dsafe/3dsafebypass.bin", 400, 240, 0, 0, SCREEN_TOP)) {
+				drawString("PIN LOCK BYPASSED. Press any key to enter 3DSafe options", 10, 10, COLOR_RED);
+			}
+			
 			//Wait for a keypress
 			waitInput();
 			clearScreens(SCREEN_TOP);
@@ -429,15 +457,21 @@ int main()
 		}
 		else {
 			//Inform the user that the OTP is invalid
-			clearScreens(SCREEN_TOP);
-			drawString("INVALID otp.bin. Press any key to proceed to enter PIN.", 10, 10, COLOR_RED);
+			if (!drawImage("0:/3dsafe/3dsafeinvalidotp.bin", 400, 240, 0, 0, SCREEN_TOP)) {
+				clearScreens(SCREEN_TOP);
+				drawString("INVALID otp.bin. Press any key to proceed to enter PIN.", 10, 10, COLOR_RED);
+			}
+			
 			//Wait for a keypress
 			waitInput();
 			clearScreens(SCREEN_TOP);
-			
+						
 			//Continue as normal from this point (request PIN)
 		}
     }
+    
+    //Unmount existing FS in case it interferes with entering God Mode
+    f_mount(NULL, "0:", 0);
     
 	/*
 	Enter Godmode to gain access to SysNAND
@@ -454,7 +488,7 @@ int main()
 	clearScreens(SCREEN_TOP);
 	
 	drewPINImage = drawImage("1:/3dsafe/3dsafepinrequest.bin", 400, 204, 0, 0, SCREEN_TOP);
-	drawImage("1:/3dsafe/3dsafelost.bin", 320, 240, 0, 0, SCREEN_BOTTOM);
+	drawLostImage();
 	
 	/*
 	Try to read the PIN file from SysNAND

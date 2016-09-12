@@ -116,7 +116,31 @@ bool drawImage(char * path, u16 width, u16 height, s16 x, s16 y, Screen screen) 
 	*/
 	UINT bytes_read = 0;
 	FIL file;
-	if (f_open(&file, path, FA_READ | FA_OPEN_EXISTING) != FR_OK) {
+	FRESULT RES = f_open(&file, path, FA_READ | FA_OPEN_EXISTING);
+	
+	if (RES != FR_OK) {
+	
+// 		if (RES == FR_DISK_ERR) error("A hard error occurred in the low level disk I/O layer");
+// 		else if (RES == FR_INT_ERR) error("Assertion failed");
+// 		else if (RES == FR_NOT_READY) error("The physical drive cannot work");
+// 		else if (RES == FR_NO_FILE) error("Could not find the file");
+// 		else if (RES == FR_NO_PATH) error("Could not find the path");
+// 		else if (RES == FR_INVALID_NAME) error("The path name format is invalid");
+// 		else if (RES == FR_DENIED) error("Access denied due to prohibited access or directory full");
+// 		else if (RES == FR_EXIST) error("Access denied due to prohibited access");
+// 		else if (RES == FR_INVALID_OBJECT) error("The file/directory object is invalid");
+// 		else if (RES == FR_WRITE_PROTECTED) error("The physical drive is write protected");
+// 		else if (RES == FR_INVALID_DRIVE) error("The logical drive number is invalid");
+// 		else if (RES == FR_NOT_ENABLED) error("The volume has no work area");
+// 		else if (RES == FR_NO_FILESYSTEM) error("There is no valid FAT volume");
+// 		else if (RES == FR_MKFS_ABORTED) error("The f_mkfs() aborted due to any problem");
+// 		else if (RES == FR_TIMEOUT) error("Could not get a grant to access the volume within defined period");
+// 		else if (RES == FR_LOCKED) error("The operation is rejected according to the file sharing policy");
+// 		else if (RES == FR_NOT_ENOUGH_CORE) error("LFN working buffer could not be allocated");
+// 		else if (RES == FR_TOO_MANY_OPEN_FILES) error("Number of open files > _FS_LOCK");
+// 		else if (RES == FR_INVALID_PARAMETER) error("Given parameter is invalid");
+// 		else error("Unknown error");
+
 		return false;
 	}
 	
@@ -170,6 +194,7 @@ bool drawImage(char * path, u16 width, u16 height, s16 x, s16 y, Screen screen) 
 		
 		if (bytes_read == 0) {
 			success = false;
+			error("Can't read from file");
 			break;
 		}
 	}

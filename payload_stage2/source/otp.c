@@ -43,8 +43,8 @@ bool validOTPFound = false;
 
 u32 fileRead(void *dest, const char *path)
 {
-	FATFS otpFS;
-	f_mount(&otpFS, "0:", 0);
+// 	FATFS otpFS;
+// 	f_mount(&otpFS, "0:", 0);
 
     FIL file;
     u32 size;
@@ -60,7 +60,7 @@ u32 fileRead(void *dest, const char *path)
     	size = 0;
     }
 
-	f_mount(NULL, "0:", 0);
+// 	f_mount(NULL, "0:", 0);
     return size;
 }
 
@@ -76,6 +76,7 @@ u32 checkOTPMatch() {
 
 bool otpIsValid(char * path) {
 	OTPChecked = true;
+	validOTPFound = true;
 
 	/*
 	Read the OTP file into memory
@@ -121,11 +122,6 @@ bool otpIsValid(char * path) {
 	if(i == 3) {
 		validOTPFound = false;
 	}
-
-	/*
-	OTP is valid :)
-	*/
-	validOTPFound = true;
 	
 	return validOTPFound;
 }
