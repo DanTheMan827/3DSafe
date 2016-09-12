@@ -72,8 +72,9 @@ char translateButton(u32 key) {
 	}
 }
 
-//Forward declaration
+//Forward declarations
 void bootPayload();
+void displayOptions();
 
 /*
 Prompt the user to enter a new PIN
@@ -310,16 +311,74 @@ void bootPayload() {
 	}
 }
 
+void drawEnteredPINAsText(char * entered) {
+	drawString(entered, 10, 30, COLOR_WHITE);
+}
+
 /*
 Draw the 'enter pin' prompt along with whatever has already been entered
 */
 void drawPin(char * entered) {
-	if (!drewPINImage) {
-		clearScreens(SCREEN_TOP);
-		drawString("Enter PIN", 10, 10, COLOR_RED);	
+	if (drewPINImage) {
+		bool success = true;
+		
+		int len = strlen(entered);
+		int stringWidth = (len*36) + ((len-1)*16);
+		int drawX = (400/2)-(stringWidth/2);
+		
+		for (int p=0; p<len; p++) {
+			char * filename;
+		
+			char c = entered[p];
+			
+			if (c == 'A') {
+				filename = "1:/3dsafea.bin";
+			}
+			else if (c == 'B') {
+				filename = "1:/3dsafeb.bin";
+			}
+			else if (c == 'X') {
+				filename = "1:/3dsafex.bin";
+			}
+			else if (c == 'Y') {
+				filename = "1:/3dsafey.bin";
+			}
+			else if (c == 'L') {
+				filename = "1:/3dsafel.bin";
+			}
+			else if (c == 'R') {
+				filename = "1:/3dsafer.bin";
+			}
+			else if (c == 'U') {
+				filename = "1:/3dsafeu.bin";
+			}
+			else if (c == 'D') {
+				filename = "1:/3dsafed.bin";
+			}
+			else if (c == '-') {
+				filename = "1:/3dsafeunderscore.bin";
+			}
+			
+			if (!drawImage(filename, 36, 36, drawX, 204, SCREEN_TOP)) {
+				success = false;
+				break;
+			}
+			
+			drawX+=(36+16);
+		}
+		
+		if (!success) {
+			drawEnteredPINAsText(entered);
+		}
 	}
 
-	drawString(entered, 10, 30, COLOR_WHITE);
+	else {
+		clearScreens(SCREEN_TOP);
+		drawString("Enter PIN", 10, 10, COLOR_RED);
+		drawEnteredPINAsText(entered);
+	}
+
+	
 }
 
 int main()
@@ -399,7 +458,6 @@ int main()
 // 	clearScreens(SCREEN_TOP);
 
 	drewPINImage = drawImage("1:/3dsafepinrequest.bin", 400, 204, 0, 0, SCREEN_TOP);
-
 	drawImage("1:/3dsafelost.bin", 320, 240, 0, 0, SCREEN_BOTTOM);
 	
 	/*
