@@ -536,9 +536,10 @@ int main()
 	If the entered PIN does not match what is expected, show an error
 	*/
 	else {		
-		clearScreens(SCREEN_TOP);
-		
-		error("Incorrect PIN\n \nIf you have forgotten your PIN, place your\notp.bin at the root of your SD card. The\nfilename must be in lower case, and the\nOTP must match this device. You will then\nbe able to reset your 3DSafe PIN");
+		if (!drawImage("1:/3dsafeincorrect.bin", 400, 240, 0, 0, SCREEN_TOP)) {
+			clearScreens(SCREEN_TOP);
+			error("Incorrect PIN\n \nIf you have forgotten your PIN, place your\notp.bin at the root of your SD card. The\nfilename must be in lower case, and the\nOTP must match this device. You will then\nbe able to reset your 3DSafe PIN");
+		}
 		
 // 		drawString("Incorrect PIN", 10, 10, COLOR_RED);
 		
