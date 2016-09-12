@@ -99,11 +99,16 @@ void turnOnBacklight()
     i2cWriteRegister(3, 0x22, 0x2A); // 0x2A -> boot into firm with no backlight
 }
 
-void drawImage(char * path, u16 width, u16 height, s16 x, s16 y, Screen screen) {
+bool drawImage(char * path, u16 width, u16 height, s16 x, s16 y, Screen screen) {
 	if (screen == SCREEN_BOTH) {
-		drawImage(path, width, height, x, y, SCREEN_TOP);
-		drawImage(path, width, height, x, y, SCREEN_BOTTOM);
-		return;
+		if (!drawImage(path, width, height, x, y, SCREEN_TOP))
+			return false;
+	
+		
+		if (!drawImage(path, width, height, x, y, SCREEN_BOTTOM))
+			return false;
+			
+		return true;
 	}
 
 	/*
@@ -112,7 +117,7 @@ void drawImage(char * path, u16 width, u16 height, s16 x, s16 y, Screen screen) 
 	UINT bytes_read = 0;
 	FIL file;
 	if (f_open(&file, path, FA_READ | FA_OPEN_EXISTING) != FR_OK) {
-		return;
+		return false;
 	}
 	
 	//Get pointer to the screen framebuffer
@@ -129,7 +134,8 @@ void drawImage(char * path, u16 width, u16 height, s16 x, s16 y, Screen screen) 
 	) {
 		//Read the whole file directly to the framebuffer and return
 		f_read(&file, aScreen, (width*height*3), &bytes_read);
-		return;
+		
+		return (bytes_read > 0);
 	}
 	
 	/*
@@ -147,8 +153,12 @@ void drawImage(char * path, u16 width, u16 height, s16 x, s16 y, Screen screen) 
 	//How many bytes to read at a time (enough for one whole row of pixels at a time)
 	int readBytes = width * 3;
 	
+	bool success = true;
+	
 	//For each row of pixels...
 	for (int row=0; row<height; row++) {
+		bytes_read = 0;
+	
 		//Calculate the offset from the left edge of the screen
 		int screenPixelOffset = (row+x)*SCREEN_TOP_HEIGHT;
 		//Add the offset from the top edge of the screen
@@ -157,7 +167,14 @@ void drawImage(char * path, u16 width, u16 height, s16 x, s16 y, Screen screen) 
 		int screenByteOffset = screenPixelOffset * 3;
 		//Read one row of pixels into the framebuffer
 		f_read(&file, &aScreen[screenByteOffset], readBytes, &bytes_read);
+		
+		if (bytes_read == 0) {
+			success = false;
+			break;
+		}
 	}
 	
 	f_close(&file);
+	
+	return success;
 }

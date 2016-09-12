@@ -1,6 +1,7 @@
 #pragma once 
 
 #include "types.h"
+#include <stdbool.h>
 
 typedef enum {
     SCREEN_TOP,
@@ -20,4 +21,4 @@ void clearScreens(Screen screen);
 void turnOnBacklight();
 void drawCharacter(char character, int posX, int posY, u32 color);
 int drawString(const char *string, int posX, int posY, u32 color);
-void drawImage(char * path, u16 width, u16 height, s16 x, s16 y, Screen screen);
+bool drawImage(char * path, u16 width, u16 height, s16 x, s16 y, Screen screen);

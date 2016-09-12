@@ -15,6 +15,8 @@
 #define A11_PAYLOAD_LOC 0x1FFF4C80 //keep in mind this needs to be changed in the ld script for arm11 too
 #define A11_ENTRY       0x1FFFFFF8
 
+bool drewPINImage = false;
+
 static void ownArm11(u32 screenInit)
 {
     memcpy((void *)A11_PAYLOAD_LOC, arm11_bin, arm11_bin_size);
@@ -312,8 +314,11 @@ void bootPayload() {
 Draw the 'enter pin' prompt along with whatever has already been entered
 */
 void drawPin(char * entered) {
-	clearScreens(SCREEN_TOP);
-	drawString("Enter PIN", 10, 10, COLOR_RED);
+	if (!drewPINImage) {
+		clearScreens(SCREEN_TOP);
+		drawString("Enter PIN", 10, 10, COLOR_RED);	
+	}
+
 	drawString(entered, 10, 30, COLOR_WHITE);
 }
 
@@ -393,8 +398,9 @@ int main()
 // 	waitInput();
 // 	clearScreens(SCREEN_TOP);
 
+	drewPINImage = drawImage("1:/3dsafepinrequest.bin", 400, 204, 0, 0, SCREEN_TOP);
+
 	drawImage("1:/3dsafelost.bin", 320, 240, 0, 0, SCREEN_BOTTOM);
-	
 	
 	/*
 	Try to read the PIN file from SysNAND
