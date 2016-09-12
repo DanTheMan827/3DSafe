@@ -100,6 +100,12 @@ void turnOnBacklight()
 }
 
 void drawImage(char * path, u16 width, u16 height, s16 x, s16 y, Screen screen) {
+	if (screen == SCREEN_BOTH) {
+		drawImage(path, width, height, x, y, SCREEN_TOP);
+		drawImage(path, width, height, x, y, SCREEN_BOTTOM);
+		return;
+	}
+
 	/*
 	Open the image file
 	*/

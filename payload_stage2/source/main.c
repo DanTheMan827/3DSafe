@@ -327,15 +327,15 @@ int main()
     /*
     DEBUG: Allow skipping past everything for brick protection during development
     */
-//     drawString("Press X to skip 3DSafe, any other button to enter 3DSafe", 10, 10, COLOR_RED);
-//     u32 key = waitInput();
-//     if (key == BUTTON_X) {
-// 		FATFS afs;
-// 		f_mount(&afs, "0:", 0); //This never fails due to deferred mounting
-//     	bootPayload();
-//     	return 0;
-//     }
-//     clearScreens(SCREEN_TOP);
+    drawString("Press X to skip 3DSafe, any other button to enter 3DSafe", 10, 10, COLOR_RED);
+    u32 key = waitInput();
+    if (key == BUTTON_X) {
+		FATFS afs;
+		f_mount(&afs, "0:", 0); //This never fails due to deferred mounting
+    	bootPayload();
+    	return 0;
+    }
+    clearScreens(SCREEN_TOP);
     
     /*
     OTP BYPASS
@@ -385,13 +385,13 @@ int main()
 	clearScreens(SCREEN_TOP);
 	
 //Test images
-// 	drawImage("0:/logo.bin", 192, 192, 50, 10, SCREEN_BOTTOM);
-// 	waitInput();
-// 	clearScreens(SCREEN_TOP);
-// 	
-// 	drawImage("1:/bg.bin", 400, 240, 0, 0, SCREEN_TOP);
-// 	waitInput();
-// 	clearScreens(SCREEN_TOP);
+	drawImage("0:/logo.bin", 192, 192, 50, 10, SCREEN_BOTH);
+	waitInput();
+	clearScreens(SCREEN_TOP);
+	
+	drawImage("1:/bg.bin", 400, 240, 0, 0, SCREEN_TOP);
+	waitInput();
+	clearScreens(SCREEN_TOP);
 	
 	
 	/*
