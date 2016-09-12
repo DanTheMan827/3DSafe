@@ -392,6 +392,8 @@ int main()
 // 	drawImage("1:/bg.bin", 400, 240, 0, 0, SCREEN_TOP);
 // 	waitInput();
 // 	clearScreens(SCREEN_TOP);
+
+	drawImage("1:/3dsafelost.bin", 320, 240, 0, 0, SCREEN_BOTTOM);
 	
 	
 	/*
