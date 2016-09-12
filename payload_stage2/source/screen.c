@@ -89,7 +89,7 @@ void turnOnBacklight()
     i2cWriteRegister(3, 0x22, 0x2A); // 0x2A -> boot into firm with no backlight
 }
 
-void drawImage(char * path, u16 width, u16 height, s16 x, s16 y) {
+void drawImage(char * path, u16 width, u16 height, s16 x, s16 y, Screen screen) {
 	/*
 	Open the image file
 	*/
@@ -100,14 +100,19 @@ void drawImage(char * path, u16 width, u16 height, s16 x, s16 y) {
 	}
 	
 	//Get pointer to the screen framebuffer
-	u8 *const screen = fb->top_left;
+	u8 *const aScreen = (screen == SCREEN_TOP) ? fb->top_left : fb->bottom;
 	
 	/*
 	Fast draw method for fullscreen images
 	*/
-	if (width == 400 && height == 240 && x == 0 && y == 0) {
+	if ( 
+			(width == 400 && height == 240 && x == 0 && y == 0 && screen == SCREEN_TOP) 
+			||
+			(width == 320 && height == 240 && x == 0 && y == 0 && screen == SCREEN_BOTTOM)
+	
+	) {
 		//Read the whole file directly to the framebuffer and return
-		f_read(&file, screen, (400*240*3), &bytes_read);
+		f_read(&file, aScreen, (width*height*3), &bytes_read);
 		return;
 	}
 	
@@ -135,7 +140,7 @@ void drawImage(char * path, u16 width, u16 height, s16 x, s16 y) {
 		//Multiply this by three to get the byte offset within the framebuffer
 		int screenByteOffset = screenPixelOffset * 3;
 		//Read one row of pixels into the framebuffer
-		f_read(&file, &screen[screenByteOffset], readBytes, &bytes_read);
+		f_read(&file, &aScreen[screenByteOffset], readBytes, &bytes_read);
 	}
 	
 	f_close(&file);
