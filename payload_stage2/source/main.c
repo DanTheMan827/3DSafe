@@ -33,7 +33,7 @@ static inline void prepareForBoot()
 {
 	setFramebuffers();
 	ownArm11(1);
-	clearScreens();
+	clearScreens(SCREEN_BOTH);
 	turnOnBacklight(); // Always screen init because CBM9 doesn't have it, and that gave me a heart attack.
 }
 
@@ -94,7 +94,7 @@ void setNewPIN(bool force) {
 		/*
 		Draw a prompt to enter some characters for the PIN
 		*/
-		clearScreens();
+		clearScreens(SCREEN_TOP);
 		drawString("Enter new PIN using ABLR and D-Pad (max. 8 characters)", 10, 10, COLOR_RED);
 		drawString("Press START when done", 10, 30, COLOR_WHITE);
 		drawString(entered, 10, 50, COLOR_WHITE);
@@ -107,7 +107,7 @@ void setNewPIN(bool force) {
 		*/
 		if (key == BUTTON_START) {
 			if (pinPos == 0) {
-				clearScreens();
+				clearScreens(SCREEN_TOP);
 			
 				if (force) {
 					continue;
@@ -151,7 +151,7 @@ void setNewPIN(bool force) {
 		}
 	}
 
-	clearScreens();
+	clearScreens(SCREEN_TOP);
 
 	/*
 	Enter god mode if necessary
@@ -220,7 +220,7 @@ void displayOptions() {
 		/*
 		Display the options on the screen
 		*/
-		clearScreens();
+		clearScreens(SCREEN_TOP);
 		drawString("3DSafe Options", 10, 10, COLOR_RED);
 		drawString("START: Boot payload", 10, 30, COLOR_WHITE);
 		drawString("    A: Change PIN", 10, 40, COLOR_WHITE);
@@ -238,7 +238,7 @@ void displayOptions() {
 		}
 	}
 
-	clearScreens();
+	clearScreens(SCREEN_TOP);
 
 	/*
 	User opted to boot the payload
@@ -312,7 +312,7 @@ void bootPayload() {
 Draw the 'enter pin' prompt along with whatever has already been entered
 */
 void drawPin(char * entered) {
-	clearScreens();
+	clearScreens(SCREEN_TOP);
 	drawString("Enter PIN", 10, 10, COLOR_RED);
 	drawString(entered, 10, 30, COLOR_WHITE);
 }
@@ -327,15 +327,15 @@ int main()
     /*
     DEBUG: Allow skipping past everything for brick protection during development
     */
-    drawString("Press X to skip 3DSafe, any other button to enter 3DSafe", 10, 10, COLOR_RED);
-    u32 key = waitInput();
-    if (key == BUTTON_X) {
-		FATFS afs;
-		f_mount(&afs, "0:", 0); //This never fails due to deferred mounting
-    	bootPayload();
-    	return 0;
-    }
-    clearScreens();
+//     drawString("Press X to skip 3DSafe, any other button to enter 3DSafe", 10, 10, COLOR_RED);
+//     u32 key = waitInput();
+//     if (key == BUTTON_X) {
+// 		FATFS afs;
+// 		f_mount(&afs, "0:", 0); //This never fails due to deferred mounting
+//     	bootPayload();
+//     	return 0;
+//     }
+//     clearScreens(SCREEN_TOP);
     
     /*
     OTP BYPASS
@@ -358,18 +358,18 @@ int main()
 			drawString("PIN LOCK BYPASSED. Press any key to enter 3DSafe options", 10, 10, COLOR_RED);
 			//Wait for a keypress
 			waitInput();
-			clearScreens();
+			clearScreens(SCREEN_TOP);
 			//Jump straight to the options menu without asking for the PIN
 			displayOptions();
 			return 0;
 		}
 		else {
 			//Inform the user that the OTP is invalid
-			clearScreens();
+			clearScreens(SCREEN_TOP);
 			drawString("INVALID otp.bin. Press any key to proceed to enter PIN.", 10, 10, COLOR_RED);
 			//Wait for a keypress
 			waitInput();
-			clearScreens();
+			clearScreens(SCREEN_TOP);
 			
 			//Continue as normal from this point (request PIN)
 		}
@@ -382,16 +382,16 @@ int main()
 		error("Could not gain access to SysNAND");
 	}
 	
-	clearScreens();
+	clearScreens(SCREEN_TOP);
 	
 //Test images
-	drawImage("0:/logo.bin", 192, 192, 50, 10, SCREEN_BOTTOM);
-	waitInput();
-	clearScreens();
-	
-	drawImage("1:/bg.bin", 400, 240, 0, 0, SCREEN_TOP);
-	waitInput();
-	clearScreens();
+// 	drawImage("0:/logo.bin", 192, 192, 50, 10, SCREEN_BOTTOM);
+// 	waitInput();
+// 	clearScreens(SCREEN_TOP);
+// 	
+// 	drawImage("1:/bg.bin", 400, 240, 0, 0, SCREEN_TOP);
+// 	waitInput();
+// 	clearScreens(SCREEN_TOP);
 	
 	
 	/*
@@ -415,7 +415,7 @@ int main()
 	*/
 // 	drawString(pin, 10, 10, COLOR_RED);
 // 	waitInput();
-// 	clearScreens();
+// 	clearScreens(SCREEN_TOP);
 	
 	//Get the length of the PIN
 	int pinlen = strlen(pin);
@@ -470,7 +470,7 @@ int main()
 	If the entered PIN does not match what is expected, show an error
 	*/
 	else {		
-		clearScreens();
+		clearScreens(SCREEN_TOP);
 		
 		error("Incorrect PIN\n \nIf you have forgotten your PIN, place your\notp.bin at the root of your SD card. The\nfilename must be in lower case, and the\nOTP must match this device. You will then\nbe able to reset your 3DSafe PIN");
 		

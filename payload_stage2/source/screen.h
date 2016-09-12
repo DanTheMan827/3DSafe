@@ -5,6 +5,7 @@
 typedef enum {
     SCREEN_TOP,
     SCREEN_BOTTOM,
+    SCREEN_BOTH
 } Screen;
 
 #define SPACING_Y   10
@@ -15,7 +16,7 @@ typedef enum {
 #define COLOR_BLACK 0x000000
 
 void setFramebuffers();
-void clearScreens();
+void clearScreens(Screen screen);
 void turnOnBacklight();
 void drawCharacter(char character, int posX, int posY, u32 color);
 int drawString(const char *string, int posX, int posY, u32 color);

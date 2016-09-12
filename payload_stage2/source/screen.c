@@ -78,10 +78,20 @@ void setFramebuffers()
     *(vu32*)0x23FFFE08 = 0x18346500;
 }
 
-void clearScreens(void)
+void clearScreens(Screen screen)
 {
-    memset32((void *)0x18300000, 0, 0x46500);
-    memset32((void *)0x18346500, 0, 0x38400);
+	if (screen == SCREEN_BOTH) {
+		clearScreens(SCREEN_TOP);
+		clearScreens(SCREEN_BOTTOM);
+	}
+	else if (screen == SCREEN_TOP) {
+		memset32((void *)0x18300000, 0, 0x46500); //top
+	}
+	else if (screen == SCREEN_BOTTOM) {
+		memset32((void *)0x18346500, 0, 0x38400); //bottom
+	}
+    
+    
 }
 
 void turnOnBacklight()
