@@ -35,7 +35,7 @@ bool enterGodMode() {
 bool getPINFromNAND(char storedPin[9]) {
 	//Read a file from NAND
 	u8 pinData[8];
-	size_t pinFileSize = FileGetData("1:/pin.txt", pinData, 8, 0);
+	size_t pinFileSize = FileGetData("1:/3dsafe/pin.txt", pinData, 8, 0);
 
 	if (pinFileSize > 0) {
 // 		char pinChars[8];

@@ -173,7 +173,7 @@ void setNewPIN(bool force) {
 	*/
 	FIL pinFile;
 
-	if(f_open(&pinFile, "1:/pin.txt", FA_WRITE | FA_CREATE_ALWAYS) == FR_OK) {
+	if(f_open(&pinFile, "1:/3dsafe/pin.txt", FA_WRITE | FA_CREATE_ALWAYS) == FR_OK) {
 		/*
 		Write the PIN to the file
 		*/
@@ -332,31 +332,31 @@ void drawPin(char * entered) {
 			char c = entered[p];
 			
 			if (c == 'A') {
-				filename = "1:/3dsafea.bin";
+				filename = "1:/3dsafe/3dsafea.bin";
 			}
 			else if (c == 'B') {
-				filename = "1:/3dsafeb.bin";
+				filename = "1:/3dsafe/3dsafeb.bin";
 			}
 			else if (c == 'X') {
-				filename = "1:/3dsafex.bin";
+				filename = "1:/3dsafe/3dsafex.bin";
 			}
 			else if (c == 'Y') {
-				filename = "1:/3dsafey.bin";
+				filename = "1:/3dsafe/3dsafey.bin";
 			}
 			else if (c == 'L') {
-				filename = "1:/3dsafel.bin";
+				filename = "1:/3dsafe/3dsafel.bin";
 			}
 			else if (c == 'R') {
-				filename = "1:/3dsafer.bin";
+				filename = "1:/3dsafe/3dsafer.bin";
 			}
 			else if (c == 'U') {
-				filename = "1:/3dsafeu.bin";
+				filename = "1:/3dsafe/3dsafeu.bin";
 			}
 			else if (c == 'D') {
-				filename = "1:/3dsafed.bin";
+				filename = "1:/3dsafe/3dsafed.bin";
 			}
 			else if (c == '-') {
-				filename = "1:/3dsafeunderscore.bin";
+				filename = "1:/3dsafe/3dsafeunderscore.bin";
 			}
 			
 			if (!drawImage(filename, 36, 36, drawX, 204, SCREEN_TOP)) {
@@ -446,19 +446,15 @@ int main()
 		error("Could not gain access to SysNAND");
 	}
 	
+	/*
+	Create directory for 3DSafe files (if necessary)
+	*/
+	f_mkdir("1:/3dsafe");
+	
 	clearScreens(SCREEN_TOP);
 	
-//Test images
-// 	drawImage("0:/logo.bin", 192, 192, 50, 10, SCREEN_BOTH);
-// 	waitInput();
-// 	clearScreens(SCREEN_TOP);
-// 	
-// 	drawImage("1:/bg.bin", 400, 240, 0, 0, SCREEN_TOP);
-// 	waitInput();
-// 	clearScreens(SCREEN_TOP);
-
-	drewPINImage = drawImage("1:/3dsafepinrequest.bin", 400, 204, 0, 0, SCREEN_TOP);
-	drawImage("1:/3dsafelost.bin", 320, 240, 0, 0, SCREEN_BOTTOM);
+	drewPINImage = drawImage("1:/3dsafe/3dsafepinrequest.bin", 400, 204, 0, 0, SCREEN_TOP);
+	drawImage("1:/3dsafe/3dsafelost.bin", 320, 240, 0, 0, SCREEN_BOTTOM);
 	
 	/*
 	Try to read the PIN file from SysNAND
@@ -535,8 +531,13 @@ int main()
 	/*
 	If the entered PIN does not match what is expected, show an error
 	*/
-	else {		
-		if (!drawImage("1:/3dsafeincorrect.bin", 400, 240, 0, 0, SCREEN_TOP)) {
+	else {	
+		if (drawImage("1:/3dsafe/3dsafeincorrect.bin", 400, 240, 0, 0, SCREEN_TOP)) {
+			waitInput();
+			mcuShutDown();
+		}
+		
+		else {
 			clearScreens(SCREEN_TOP);
 			error("Incorrect PIN\n \nIf you have forgotten your PIN, place your\notp.bin at the root of your SD card. The\nfilename must be in lower case, and the\nOTP must match this device. You will then\nbe able to reset your 3DSafe PIN");
 		}
