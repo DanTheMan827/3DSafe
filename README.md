@@ -30,6 +30,7 @@ I have tested this on my EUR n3DS. I make absolutely no guarantee that it will w
 
 # How to create a 'lost' message for the bottom screen
 If a file called /3dsafe/lost.bin is found on the SD card, 3DSafe will display this on the bottom screen. Since it's an image, you can use it to display whatever you want. However, I recommend that you use it to display your contact details in case your 3DS is lost. Here's how to do that.
+
 1. Create a 320x240 image in any paint programme. The file MUST be the correct size or it won't display properly (or might cause weird effects when 3DSafe tries to load it)
 2. Write your contact details or whatever you want into the image
 3. Save the image as a non-transparent PNG
