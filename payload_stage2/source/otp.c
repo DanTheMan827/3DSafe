@@ -12,8 +12,8 @@ https://github.com/AuroraWright/SafeA9LHInstaller
 #include "sdmmc.h"
 #include "memory.h"
 #include "buttons.h"
+#include "godmode.h"
 
-#define OTP_OFFSET        0x24000000
 #define SECTOR_OFFSET     0x24100000
 #define FIRM0_OFFSET      0x24200000
 #define FIRM0_SIZE        0xF3000
@@ -25,6 +25,8 @@ https://github.com/AuroraWright/SafeA9LHInstaller
 
 #define STAGE1_OFFSET     FIRM0_OFFSET + STAGE1_POSITION
 #define STAGE2_OFFSET     0x24400000
+
+#define OTP_FROM_MEM      0x10012000
 
 static const u8 firm0Hash[0x20] = {
     0x6E, 0x4D, 0x14, 0xAD, 0x51, 0x50, 0xA5, 0x9A, 0x87, 0x59, 0x62, 0xB7, 0x09, 0x0A, 0x3C, 0x74,
@@ -74,21 +76,53 @@ u32 checkOTPMatch() {
 	return i;
 }
 
-bool otpIsValid(char * path) {
+bool otpIsValid(char * path, OTPLocation location) {
 	OTPChecked = true;
 	validOTPFound = true;
 
 	/*
-	Read the OTP file into memory
+	Read the OTP into memory
 	*/
-	if(fileRead((void *)OTP_OFFSET, path) != 256) {
-		validOTPFound = false;
+	if (location == OTP_LOCATION_DISK) {
+		if(fileRead((void *)OTP_OFFSET, path) != 256) {
+			validOTPFound = false;
+			return false;
+		}
 	}
+	else if (location == OTP_LOCATION_MEMORY) {
+// 		clearScreens(SCREEN_TOP);
+// 		drawString("Creating zeroes", 10, 10, COLOR_TITLE);
+// 		waitInput();
+	
+		const u8 zeroes[256] = {0};
+		
+// 		clearScreens(SCREEN_TOP);
+// 		drawString("Comparing OTP in memory", 10, 10, COLOR_TITLE);
+// 		waitInput();
+		
+		if(memcmp((void *)OTP_FROM_MEM, zeroes, 256) == 0) {
+// 			clearScreens(SCREEN_TOP);
+// 			drawString("OTP in memory is zero", 10, 10, COLOR_TITLE);
+// 			waitInput();
+		
+			return otpIsValid(path, OTP_LOCATION_DISK);
+		}
+		else {
+// 			clearScreens(SCREEN_TOP);
+// 			drawString("Copying OTP from memory to offset", 10, 10, COLOR_TITLE);
+// 			waitInput();
+		
+			memcpy((void *)OTP_OFFSET, (void *)OTP_FROM_MEM, 256);
+		}
+	}
+	
+	
 	
 	/*
 	Set up crypto stuff for OTP verification
 	*/
-	setupKeyslot0x11(false, (void *)OTP_OFFSET);
+	
+	setupKeyslot0x11((location == OTP_LOCATION_MEMORY), (void *)OTP_OFFSET);
 	getNandCTR();
 	
 // 	return true;
@@ -98,7 +132,8 @@ bool otpIsValid(char * path) {
 	*/
 	readFirm0((u8 *)FIRM0_OFFSET, FIRM0_SIZE);
     if(memcmp((void *)FIRM0_OFFSET, "FIRM", 4) != 0) {
-		validOTPFound = false;
+    	validOTPFound = false;
+    	return false;
     }
 
 	/*
@@ -109,6 +144,7 @@ bool otpIsValid(char * path) {
 	/*
 	Check if OTP matches
 	*/
+	
 	u32 i = checkOTPMatch();
 // 	u32 i;
 // 	for(i = 0; i < 3; i++) {
@@ -121,18 +157,30 @@ bool otpIsValid(char * path) {
 	*/
 	if(i == 3) {
 		validOTPFound = false;
+		return false;
 	}
 	
 	return validOTPFound;
 }
 
-void sa9lhi() {
+void sa9lhi(bool allowExit) {
 	if (!OTPChecked) {
-		otpIsValid("OTP.BIN");
+		if (!otpIsValid("0:/OTP.BIN", OTP_LOCATION_DISK)) {
+// 			if (!godMode) {
+// 				/*
+// 				Enter Godmode to gain access to SysNAND
+// 				*/
+// 				if(!enterGodMode()) {
+// 					error("Could not gain access to SysNAND");
+// 				}
+// 			}
+		
+			otpIsValid("1:/OTP.BIN", OTP_LOCATION_DISK);
+		}
 	}
 	
 	if (!validOTPFound) {
-		error("Can't run SafeA9LHInstaller as no valid OTP found");
+		error("Can't run SafeA9LHInstaller as no valid OTP\nfound. Ensure otp.bin is on your SD card.");
 	}
 
 	u32 updatea9lh = 0;
@@ -148,14 +196,16 @@ void sa9lhi() {
 		drawString("SafeA9LHInstaller v2.0.4", 10, 10, COLOR_TITLE);
 		posY = drawString("Thanks to delebile, #cakey and StandardBus", 10, 40, COLOR_WHITE);
 		posY = drawString("Press SELECT to update A9LH", 10, posY + SPACING_Y, COLOR_WHITE);
-		posY += SPACING_Y;
-		posY = drawString("Press B to cancel", 10, posY, COLOR_WHITE);
+		if (allowExit) {
+			posY += SPACING_Y;
+			posY = drawString("Press B to cancel", 10, posY, COLOR_WHITE);
+		}
 		
 		drawString("SafeA9LHInstaller by AuroraWright", 10, 200, COLOR_WHITE);
 		drawString("http://goo.gl/EPfoS5", 10, 210, COLOR_WHITE);
 		
 		pressed = waitInput();
-		if (pressed == BUTTON_SELECT || pressed == BUTTON_B) {
+		if (pressed == BUTTON_SELECT || (allowExit && pressed == BUTTON_B)) {
 			validOption = true;
 		}
 	}
@@ -212,7 +262,7 @@ void sa9lhi() {
 		waitInput();
 		mcuShutDown();
 	}
-	else if (pressed == BUTTON_B) {
+	else if (pressed == BUTTON_B && allowExit) {
 		return;
 	}
 }

@@ -11,10 +11,10 @@
 #include "nand/nand.h"
 
 //Flag to determine whether godmode was successfully entered (at any point)
-bool godMode = false;
+// bool godMode = false;
 
 bool enterGodMode() {
-	godMode = false;
+// 	godMode = false;
 
 	if (!InitSDCardFS()) {
 		return false;
@@ -28,7 +28,7 @@ bool enterGodMode() {
 		return false;
 	}
 	
-	godMode = true;
+// 	godMode = true;
 	return true;
 }
 

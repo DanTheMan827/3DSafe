@@ -9,7 +9,7 @@
 #include <stdbool.h>
 
 //Flag to determine whether godmode was successfully entered (at any point)
-extern bool godMode;
+// extern bool godMode;
 
 bool enterGodMode();
 bool getPINFromNAND(char storedPin[9]);

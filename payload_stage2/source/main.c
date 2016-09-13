@@ -233,14 +233,14 @@ void setNewPIN(bool force) {
 	/*
 	Enter god mode if necessary
 	*/
-	if (!godMode) {
-		/*
-		Enter Godmode to gain access to SysNAND
-		*/
-		if(!enterGodMode()) {
-			error("Could not gain access to SysNAND");
-		}
-	}
+// 	if (!godMode) {
+// 		/*
+// 		Enter Godmode to gain access to SysNAND
+// 		*/
+// 		if(!enterGodMode()) {
+// 			error("Could not gain access to SysNAND");
+// 		}
+// 	}
 
 	/*
 	Open the pin file in NAND
@@ -334,10 +334,10 @@ void displayOptions() {
 		/*
 		If not in god mode, mount the SD card so the payload will be found
 		*/
-		if (!godMode) {			
-			FATFS afs;
-			f_mount(&afs, "0:", 0);
-		}
+// 		if (!godMode) {			
+// 			FATFS afs;
+// 			f_mount(&afs, "0:", 0);
+// 		}
 	
 		//Boot the payload
 		bootPayload();
@@ -360,8 +360,8 @@ void displayOptions() {
 	/*
 	User opted to run SafeA9LHInstaller
 	*/
-	else if (key == BUTTON_X) {
-		sa9lhi();
+	else if (key == BUTTON_X) {	
+		sa9lhi(true);
 		displayOptions();
 	}
 }
@@ -437,34 +437,65 @@ int main()
     /*
     DEBUG: Allow skipping past everything for brick protection during development
     */
-//     drawString("Press X to skip 3DSafe, any other button to enter 3DSafe", 10, 10, COLOR_RED);
-//     u32 key = waitInput();
-//     if (key == BUTTON_X) {
-// 		FATFS afs;
-// 		f_mount(&afs, "0:", 0); //This never fails due to deferred mounting
-//     	bootPayload();
-//     	return 0;
-//     }
-//     clearScreens(SCREEN_TOP);
+    drawString("Press X to skip 3DSafe, any other button to enter 3DSafe", 10, 10, COLOR_RED);
+    u32 key = waitInput();
+    if (key == BUTTON_X) {
+		FATFS afs;
+		f_mount(&afs, "0:", 0); //This never fails due to deferred mounting
+    	bootPayload();
+    	return 0;
+    }
+    clearScreens(SCREEN_TOP);
+    
+    /*
+	Enter Godmode to gain access to SysNAND
+	*/
+// 	if(!enterGodMode()) {
+	if(true) {
+		drawString("Could not gain access to sysNAND\nPress any key to run SafeA9LHInstaller.\nFrom here you can install a different A9LH payload.", 10, 10, COLOR_RED);
+		waitInput();
+		FATFS afs;
+		f_mount(&afs, "0:", 0);
+		otpIsValid("OTP.BIN", OTP_LOCATION_DISK);
+		clearScreens(SCREEN_TOP);
+		sa9lhi(false);
+	}
     
     /*
     OTP BYPASS
     First, mount the SD card, check if the otp exists, and store the result in RES.
     Then unmount the SD card (leaving it mounted might interfere with entering god mode later)
     */
-    FATFS otpFS;
-	f_mount(&otpFS, "0:", 0);
+//     FATFS otpFS;
+// 	f_mount(&otpFS, "0:", 0);
     FIL otp;
-    char * otpPath = "OTP.BIN";
-    FRESULT RES = f_open(&otp,otpPath, FA_READ);
+    char * otpPath = "0:/OTP.BIN";
     
     /*
     An otp.bin was found. Check if it is valid for this console
     */
-    if(RES == FR_OK) {
+    if(f_open(&otp,otpPath, FA_READ) == FR_OK) {
     	drawLostImage();
     
-    	if (otpIsValid(otpPath)) {    	
+    	if (otpIsValid(otpPath, OTP_LOCATION_DISK)) {
+    		FIL nandOTP;
+    		char *sysOTPPath = "1:/OTP.BIN";
+    	
+    		if(f_open(&nandOTP, sysOTPPath, FA_READ) != FR_OK) {    			
+    			f_close(&nandOTP);
+    			
+    			if(f_open(&nandOTP, sysOTPPath, FA_WRITE | FA_CREATE_ALWAYS) == FR_OK) {
+    				unsigned int bw;
+					f_write (&nandOTP, (void*)OTP_OFFSET, 256, &bw);
+					f_sync(&nandOTP);
+					f_close(&nandOTP);
+					
+					if (bw == 0) {
+						f_unlink(sysOTPPath);
+					}
+    			}
+    		}
+    	
 			//Inform the user that the PIN lock has been bypassed
 			if (!drawImage("0:/3dsafe/bypass.bin", 400, 240, 0, 0, SCREEN_TOP)) {
 				drawString("PIN LOCK BYPASSED. Press any key to enter 3DSafe options", 10, 10, COLOR_RED);
@@ -493,14 +524,9 @@ int main()
     }
     
     //Unmount existing FS in case it interferes with entering God Mode
-    f_mount(NULL, "0:", 0);
+//     f_mount(NULL, "0:", 0);
     
-	/*
-	Enter Godmode to gain access to SysNAND
-	*/
-	if(!enterGodMode()) {
-		error("Could not gain access to SysNAND");
-	}
+	
 	
 	/*
 	Create directory for 3DSafe files (if necessary)
