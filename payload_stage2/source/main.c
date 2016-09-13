@@ -291,6 +291,31 @@ void setNewPIN(bool force) {
 	}
 }
 
+void showAbout() {
+	clearScreens(SCREEN_TOP);
+	drawString("About 3DSafe", 10, 10, COLOR_TITLE);
+	drawString("3DSafe 0.4 by mashers", 10, 30, COLOR_WHITE);
+	drawString("GitHub repo: http://goo.gl/QLsBx3", 10, 40, COLOR_WHITE);
+
+	drawString("Payloads based on ShadowNAND by RShadowHand", 10, 60, COLOR_WHITE);
+	drawString("GitHub repo: http://goo.gl/DYP4IA", 10, 70, COLOR_WHITE);
+	
+	drawString("Payloads based on ShadowNAND by RShadowHand", 10, 90, COLOR_WHITE);
+	drawString("GitHub repo: http://goo.gl/DYP4IA", 10, 100, COLOR_WHITE);
+	
+	drawString("NAND read/write from GodMode9 by d0k3", 10, 110, COLOR_WHITE);
+	drawString("GitHub repo: http://goo.gl/Ejhjf8", 10, 120, COLOR_WHITE);
+	
+	drawString("Incorporates SafeA9LHInstaller by AuroraWright", 10, 140, COLOR_WHITE);
+	drawString("GitHub repo: http://goo.gl/XkRYAQ", 10, 150, COLOR_WHITE);
+	
+	drawString("Press any key to continue", 10, 170, COLOR_WHITE);
+	
+	waitInput();
+	
+	//https://github.com/d0k3/GodMode9
+}
+
 /*
 Show the options menu to the user
 */
@@ -311,6 +336,7 @@ void displayOptions() {
 		drawString("    A: Change PIN", 10, 40, COLOR_WHITE);
 		drawString("    B: Power off", 10, 50, COLOR_WHITE);
 		drawString("    X: SafeA9LHInstaller", 10, 60, COLOR_WHITE);
+		drawString("    Y: About 3DSafe", 10, 70, COLOR_WHITE);
 	}
 
 	while (validOption == 0) {
@@ -320,7 +346,7 @@ void displayOptions() {
 		/*
 		If the button pressed corresponds to a menu option, break out of the while loop
 		*/
-		if (key == BUTTON_START || key == BUTTON_A || key == BUTTON_B || key == BUTTON_X) {
+		if (key == BUTTON_START || key == BUTTON_A || key == BUTTON_B || key == BUTTON_X || key == BUTTON_Y) {
 			validOption = 1;
 		}
 	}
@@ -362,6 +388,14 @@ void displayOptions() {
 	*/
 	else if (key == BUTTON_X) {	
 		sa9lhi(true);
+		displayOptions();
+	}
+	
+	/*
+	User opted to view about page
+	*/
+	else if (key == BUTTON_Y) {	
+		showAbout();
 		displayOptions();
 	}
 }
