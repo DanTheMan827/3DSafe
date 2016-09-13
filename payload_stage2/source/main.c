@@ -300,16 +300,13 @@ void showAbout() {
 	drawString("Payloads based on ShadowNAND by RShadowHand", 10, 60, COLOR_WHITE);
 	drawString("GitHub repo: http://goo.gl/DYP4IA", 10, 70, COLOR_WHITE);
 	
-	drawString("Payloads based on ShadowNAND by RShadowHand", 10, 90, COLOR_WHITE);
-	drawString("GitHub repo: http://goo.gl/DYP4IA", 10, 100, COLOR_WHITE);
+	drawString("NAND read/write from GodMode9 by d0k3", 10, 90, COLOR_WHITE);
+	drawString("GitHub repo: http://goo.gl/Ejhjf8", 10, 100, COLOR_WHITE);
 	
-	drawString("NAND read/write from GodMode9 by d0k3", 10, 110, COLOR_WHITE);
-	drawString("GitHub repo: http://goo.gl/Ejhjf8", 10, 120, COLOR_WHITE);
+	drawString("Incorporates SafeA9LHInstaller by AuroraWright", 10, 120, COLOR_WHITE);
+	drawString("GitHub repo: http://goo.gl/XkRYAQ", 10, 130, COLOR_WHITE);
 	
-	drawString("Incorporates SafeA9LHInstaller by AuroraWright", 10, 140, COLOR_WHITE);
-	drawString("GitHub repo: http://goo.gl/XkRYAQ", 10, 150, COLOR_WHITE);
-	
-	drawString("Press any key to continue", 10, 170, COLOR_WHITE);
+	drawString("Press any key to continue", 10, 150, COLOR_WHITE);
 	
 	waitInput();
 	
@@ -484,8 +481,7 @@ int main()
     /*
 	Enter Godmode to gain access to SysNAND
 	*/
-// 	if(!enterGodMode()) {
-	if(true) {
+	if(!enterGodMode()) {
 		drawString("Could not gain access to sysNAND\nPress any key to run SafeA9LHInstaller.\nFrom here you can install a different A9LH payload.", 10, 10, COLOR_RED);
 		waitInput();
 		FATFS afs;
