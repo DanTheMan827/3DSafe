@@ -46,13 +46,32 @@ void mcuReboot(void)
     while(1);
 }
 
-void error(const char *message)
+void error(const char *message, bool fatal)
 {
-    drawString("An error has occurred:", 10, 10, COLOR_RED);
-    int posY = drawString(message, 10, 30, COLOR_WHITE);
-    drawString("Press any button to shutdown", 10, posY + 2 * SPACING_Y, COLOR_WHITE);
+	char * imagePath = (fatal) ? "0:/3dsafe/fatalerror.bin" : "0:/3dsafe/error.bin";
+	
+	if (drawImage(imagePath, 400, 240, 0, 0, SCREEN_TOP)) {
+		drawString(message, 20, 110, COLOR_WHITE);
+	}
+	else {
+		clearScreens(SCREEN_TOP);
+	
+		drawString("An error has occurred:", 10, 10, COLOR_RED);
+		int posY = drawString(message, 10, 30, COLOR_WHITE);
+		
+		int footerYPos = posY + 2 * SPACING_Y;
+		
+		if (fatal) {
+			drawString("Press any button to shutdown", 10, footerYPos, COLOR_WHITE);
+		}
+		else {
+			drawString("Press any button to continue", 10, footerYPos, COLOR_WHITE);
+		}
+	}
 
     waitInput();
-
-    mcuShutDown();
+    
+    if (fatal) {
+    	mcuShutDown();
+    }
 }

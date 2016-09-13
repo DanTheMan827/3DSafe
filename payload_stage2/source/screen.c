@@ -194,7 +194,6 @@ bool drawImage(char * path, u16 width, u16 height, s16 x, s16 y, Screen screen) 
 		
 		if (bytes_read == 0) {
 			success = false;
-			error("Can't read from file");
 			break;
 		}
 	}

@@ -85,7 +85,7 @@ void drawPINGfx(char * entered) {
 		
 	if (drawImage("0:/3dsafe/pinbottom.bin", 400, 36, 0, 204, SCREEN_TOP)) {
 		int len = strlen(entered);
-		int stringWidth = (len*36) + ((len-1)*16);
+		int stringWidth = (len*36);// + ((len-1)*16);
 		int drawX = (400/2)-(stringWidth/2);
 	
 		for (int p=0; p<len; p++) {
@@ -126,7 +126,7 @@ void drawPINGfx(char * entered) {
 				break;
 			}
 		
-			drawX+=(36+16);
+			drawX+=32;//(36+16);
 		}
 	}
 	else {
@@ -158,7 +158,9 @@ void setNewPIN(bool force) {
 	/*
 	Draw a prompt to enter some characters for the PIN
 	*/
-	bool drewGraphicalChangePrompt = drawImage("0:/3dsafe/changepin.bin", 400, 240, 0, 0, SCREEN_TOP);
+	char * imagePath = (force) ? "0:/3dsafe/forcechangepin.bin" : "0:/3dsafe/changepin.bin";
+	
+	bool drewGraphicalChangePrompt = drawImage(imagePath, 400, 240, 0, 0, SCREEN_TOP);
 	
 	if (!drewGraphicalChangePrompt) {
 		clearScreens(SCREEN_TOP);
@@ -279,7 +281,7 @@ void setNewPIN(bool force) {
 		Show save error
 		*/
 		else {
-			error("The PIN could not be saved (no bytes written)");
+			error("The PIN could not be saved (no bytes written)", true);
 		}
 	}
 	
@@ -287,7 +289,7 @@ void setNewPIN(bool force) {
 	Show PIN file open error
 	*/
 	else {
-		error("The PIN could not be saved (file open fail)");
+		error("The PIN could not be saved (file open fail)", true);
 	}
 }
 
@@ -309,8 +311,6 @@ void showAbout() {
 	drawString("Press any key to continue", 10, 150, COLOR_WHITE);
 	
 	waitInput();
-	
-	//https://github.com/d0k3/GodMode9
 }
 
 /*
@@ -422,7 +422,7 @@ void bootPayload() {
 	*/
 	else
 	{
-		error("Couldn't find the payload.\nMake sure to either:\n 1) Have SD card plugged in\n 2) Have arm9loaderhax.bin at SD root");
+		error("Couldn't find the payload.\nMake sure to either:\n 1) Have SD card plugged in\n 2) Have arm9loaderhax.bin at SD root", true);
 	}
 }
 
@@ -454,7 +454,7 @@ void showIncorrectPIN() {
 	}
 	else {
 		clearScreens(SCREEN_TOP);
-		error("Incorrect PIN\n \nIf you have forgotten your PIN, place your\notp.bin at the root of your SD card. The\nOTP must match this device. You will then\nbe able to reset your 3DSafe PIN");
+		error("Incorrect PIN\n \nIf you have forgotten your PIN, place your\notp.bin at the root of your SD card. The\nOTP must match this device. You will then\nbe able to reset your 3DSafe PIN", true);
 	}
 }
 
@@ -468,24 +468,29 @@ int main()
     /*
     DEBUG: Allow skipping past everything for brick protection during development
     */
-    drawString("Press X to skip 3DSafe, any other button to enter 3DSafe", 10, 10, COLOR_RED);
-    u32 key = waitInput();
-    if (key == BUTTON_X) {
-		FATFS afs;
-		f_mount(&afs, "0:", 0); //This never fails due to deferred mounting
-    	bootPayload();
-    	return 0;
-    }
-    clearScreens(SCREEN_TOP);
+//     drawString("Press X to skip 3DSafe, any other button to enter 3DSafe", 10, 10, COLOR_RED);
+//     u32 key = waitInput();
+//     if (key == BUTTON_X) {
+// 		FATFS afs;
+// 		f_mount(&afs, "0:", 0); //This never fails due to deferred mounting
+//     	bootPayload();
+//     	return 0;
+//     }
+//     clearScreens(SCREEN_TOP);
     
     /*
 	Enter Godmode to gain access to SysNAND
 	*/
 	if(!enterGodMode()) {
-		drawString("Could not gain access to sysNAND\nPress any key to run SafeA9LHInstaller.\nFrom here you can install a different A9LH payload.", 10, 10, COLOR_RED);
-		waitInput();
 		FATFS afs;
 		f_mount(&afs, "0:", 0);
+	
+		if (!drawImage("3dsafe/nogodmode.bin", 400, 240, 0, 0, SCREEN_TOP)) {
+			drawString("Could not gain access to sysNAND\nPress any key to run SafeA9LHInstaller.\nFrom here you can install a different A9LH payload.", 10, 10, COLOR_RED);
+		}
+		
+		waitInput();
+		
 		otpIsValid("OTP.BIN", OTP_LOCATION_DISK);
 		clearScreens(SCREEN_TOP);
 		sa9lhi(false);
@@ -565,7 +570,6 @@ int main()
 	
 	clearScreens(SCREEN_TOP);
 	
-	drewPINImage = drawImage("0:/3dsafe/pinrequest.bin", 400, 240, 0, 0, SCREEN_TOP);
 	drawLostImage();
 	
 	/*
@@ -580,9 +584,11 @@ int main()
     	
     	//If we still can't get a PIN from NAND, show an error and die
     	if (!getPINFromNAND(pin)) {	
-			error("Failed to get PIN from NAND. You should use otp.bin bypass to regain access to your device");
+			error("Failed to get PIN from NAND. You should use otp.bin bypass to regain access to your device", true);
 		}
     }
+    
+    drewPINImage = drawImage("0:/3dsafe/pinrequest.bin", 400, 240, 0, 0, SCREEN_TOP);
 	
 	/*
 	DEBUG: print the read PIN on the screen

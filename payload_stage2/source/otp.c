@@ -180,7 +180,7 @@ void sa9lhi(bool allowExit) {
 	}
 	
 	if (!validOTPFound) {
-		error("Can't run SafeA9LHInstaller as no valid OTP\nfound. Ensure otp.bin is on your SD card.");
+		error("Can't run SafeA9LHInstaller as no valid OTP\nfound. Ensure otp.bin is on your SD card.", !allowExit);
 	}
 
 	u32 updatea9lh = 0;
@@ -223,13 +223,13 @@ void sa9lhi(bool allowExit) {
 			//Read FIRM0
 			path = "a9lh/firm0.bin";
 			if(fileRead((void *)FIRM0_OFFSET, path) != FIRM0_SIZE)
-				error("firm0.bin doesn't exist or has a wrong size");
+				error("firm0.bin doesn't exist or has a wrong size", !allowExit);
 
 			if(!verifyHash((void *)FIRM0_OFFSET, FIRM0_SIZE, firm0Hash))
-				error("firm0.bin is invalid or corrupted");
+				error("firm0.bin is invalid or corrupted", !allowExit);
 		}
 		else if(!verifyHash((void *)FIRM0_OFFSET, SECTION2_POSITION, firm0A9lhHash))
-			error("NAND FIRM0 is invalid");
+			error("NAND FIRM0 is invalid", !allowExit);
 
 
 		//Inject stage1
@@ -237,18 +237,18 @@ void sa9lhi(bool allowExit) {
 		path = "a9lh/payload_stage1.bin";
 		u32 size = fileRead((void *)STAGE1_OFFSET, path);
 		if(!size || size > MAX_STAGE1_SIZE)
-			error("payload_stage1.bin doesn't exist or\nexceeds max size");
+			error("payload_stage1.bin doesn't exist or\nexceeds max size", !allowExit);
 
 		const u8 zeroes[688] = {0};
 		if(memcmp(zeroes, (void *)STAGE1_OFFSET, 688) == 0)
-			error("The payload_stage1.bin you're attempting\nto install is not compatible");
+			error("The payload_stage1.bin you're attempting\nto install is not compatible", !allowExit);
 
 		//Read stage2
 		memset32((void *)STAGE2_OFFSET, 0, MAX_STAGE2_SIZE);
 		path = "a9lh/payload_stage2.bin";
 		size = fileRead((void *)STAGE2_OFFSET, path);
 		if(!size || size > MAX_STAGE2_SIZE)
-			error("payload_stage2.bin doesn't exist or\nexceeds max size");
+			error("payload_stage2.bin doesn't exist or\nexceeds max size", !allowExit);
 
 		posY = drawString("All checks passed, installing...", 10, posY + SPACING_Y, COLOR_WHITE);
 
