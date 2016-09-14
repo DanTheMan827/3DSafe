@@ -296,7 +296,7 @@ void setNewPIN(bool force) {
 void showAbout() {
 	clearScreens(SCREEN_TOP);
 	drawString("About 3DSafe", 10, 10, COLOR_TITLE);
-	drawString("3DSafe 0.4 by mashers", 10, 30, COLOR_WHITE);
+	drawString("3DSafe 0.5 by mashers", 10, 30, COLOR_WHITE);
 	drawString("GitHub repo: http://goo.gl/QLsBx3", 10, 40, COLOR_WHITE);
 
 	drawString("Payloads based on ShadowNAND by RShadowHand", 10, 60, COLOR_WHITE);
@@ -407,8 +407,24 @@ void bootPayload() {
 	FIL payload;
 	unsigned int br;
 
-	if(f_open(&payload, "arm9loaderhax.bin", FA_READ) == FR_OK)
-	{
+
+	bool foundPayload = false;
+	bool deinitScreenBeforeBoot = false;
+	char * payloadFilename;
+
+	if(f_open(&payload, "arm9loaderhax.bin", FA_READ) == FR_OK) {
+		foundPayload = true;
+	}
+	else if(f_open(&payload, "arm9loaderhax_noscreeninit.bin", FA_READ) == FR_OK) {
+		foundPayload = true;
+		deinitScreenBeforeBoot = true;
+	}
+	
+	if (foundPayload) {
+		if (deinitScreenBeforeBoot) {
+			turnOffBacklight();
+		}
+	
 		/*
 		Read the payload and boot it
 		*/
@@ -491,7 +507,7 @@ int main()
 		
 		waitInput();
 		
-		otpIsValid("OTP.BIN", OTP_LOCATION_DISK);
+// 		otpIsValid("OTP.BIN", OTP_LOCATION_DISK);
 		clearScreens(SCREEN_TOP);
 		sa9lhi(false);
 	}

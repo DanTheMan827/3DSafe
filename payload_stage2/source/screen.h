@@ -19,6 +19,7 @@ typedef enum {
 void setFramebuffers();
 void clearScreens(Screen screen);
 void turnOnBacklight();
+void turnOffBacklight();
 void drawCharacter(char character, int posX, int posY, u32 color);
 int drawString(const char *string, int posX, int posY, u32 color);
 bool drawImage(char * path, u16 width, u16 height, s16 x, s16 y, Screen screen);

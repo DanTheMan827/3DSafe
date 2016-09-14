@@ -99,6 +99,13 @@ void turnOnBacklight()
     i2cWriteRegister(3, 0x22, 0x2A); // 0x2A -> boot into firm with no backlight
 }
 
+void turnOffBacklight()
+{
+    i2cWriteRegister(3, 0x22, 0x16);
+}
+
+
+
 bool drawImage(char * path, u16 width, u16 height, s16 x, s16 y, Screen screen) {
 	if (screen == SCREEN_BOTH) {
 		if (!drawImage(path, width, height, x, y, SCREEN_TOP))

@@ -84,39 +84,11 @@ bool otpIsValid(char * path, OTPLocation location) {
 	Read the OTP into memory
 	*/
 	if (location == OTP_LOCATION_DISK) {
-		if(fileRead((void *)OTP_OFFSET, path) != 256) {
+		if(fileRead((void *)OTP_OFFSET, path) != 256) {		
 			validOTPFound = false;
 			return false;
 		}
 	}
-	else if (location == OTP_LOCATION_MEMORY) {
-// 		clearScreens(SCREEN_TOP);
-// 		drawString("Creating zeroes", 10, 10, COLOR_TITLE);
-// 		waitInput();
-	
-		const u8 zeroes[256] = {0};
-		
-// 		clearScreens(SCREEN_TOP);
-// 		drawString("Comparing OTP in memory", 10, 10, COLOR_TITLE);
-// 		waitInput();
-		
-		if(memcmp((void *)OTP_FROM_MEM, zeroes, 256) == 0) {
-// 			clearScreens(SCREEN_TOP);
-// 			drawString("OTP in memory is zero", 10, 10, COLOR_TITLE);
-// 			waitInput();
-		
-			return otpIsValid(path, OTP_LOCATION_DISK);
-		}
-		else {
-// 			clearScreens(SCREEN_TOP);
-// 			drawString("Copying OTP from memory to offset", 10, 10, COLOR_TITLE);
-// 			waitInput();
-		
-			memcpy((void *)OTP_OFFSET, (void *)OTP_FROM_MEM, 256);
-		}
-	}
-	
-	
 	
 	/*
 	Set up crypto stuff for OTP verification
@@ -124,8 +96,6 @@ bool otpIsValid(char * path, OTPLocation location) {
 	
 	setupKeyslot0x11((location == OTP_LOCATION_MEMORY), (void *)OTP_OFFSET);
 	getNandCTR();
-	
-// 	return true;
 	
 	/*
 	Read and decrypt from the FIRM0 partition on NAND
@@ -142,15 +112,16 @@ bool otpIsValid(char * path, OTPLocation location) {
 	getSector((u8 *)SECTOR_OFFSET);
 
 	/*
+	Should be good to go by this point if using the sha256 from RAM
+	*/
+	if (location == OTP_LOCATION_MEMORY) {
+		return true;
+	}
+
+	/*
 	Check if OTP matches
 	*/
-	
 	u32 i = checkOTPMatch();
-// 	u32 i;
-// 	for(i = 0; i < 3; i++) {
-// 		//Break if a match was found
-// 		if(memcmp((void *)(SECTOR_OFFSET + 0x10), key2s[i], 0x10) == 0) break;
-// 	}
 
 	/*
 	No match found - OTP is invalid
@@ -164,23 +135,39 @@ bool otpIsValid(char * path, OTPLocation location) {
 }
 
 void sa9lhi(bool allowExit) {
+	/*
+	If OTP needs to be checked (this should always be the case unless SA9LHI was run
+	using OTP bypass)
+	*/
 	if (!OTPChecked) {
-		if (!otpIsValid("0:/OTP.BIN", OTP_LOCATION_DISK)) {
-// 			if (!godMode) {
-// 				/*
-// 				Enter Godmode to gain access to SysNAND
-// 				*/
-// 				if(!enterGodMode()) {
-// 					error("Could not gain access to SysNAND");
-// 				}
-// 			}
-		
-			otpIsValid("1:/OTP.BIN", OTP_LOCATION_DISK);
+		/*
+		If the user is allowed to back out from SafeA9LHInstaller then this means that
+		it was run from the options menu. Therefore, read the sha256 from RAM. We can
+		do this safely because the only way to enter the options menu is if the user
+		entered a correct PIN, or if they used OTP bypass. We therefore don't care
+		whether or not they have the OTP on disk
+		*/
+		if (allowExit) {
+			otpIsValid(NULL, OTP_LOCATION_MEMORY);
+		}
+		/*
+		If the user is NOT allowed to back out from SafeA9LHInstaller then this means
+		that it was run in a rare situation in which godmode could not be achieved.
+		In this situation, the user cannot verify their PIN or use OTP bypass. For
+		this reason, read the sha256 from disk to make sure the user actually has a
+		valid OTP.
+		*/
+		else {
+			otpIsValid("OTP.BIN", OTP_LOCATION_DISK);
 		}
 	}
 	
+	/*
+	Die if no valid OTP was found
+	*/
 	if (!validOTPFound) {
 		error("Can't run SafeA9LHInstaller as no valid OTP\nfound. Ensure otp.bin is on your SD card.", !allowExit);
+		return;
 	}
 
 	u32 updatea9lh = 0;
