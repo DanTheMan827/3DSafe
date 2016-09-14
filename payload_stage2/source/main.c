@@ -529,23 +529,23 @@ int main()
     	drawLostImage();
     
     	if (otpIsValid(otpPath, OTP_LOCATION_DISK)) {
-    		FIL nandOTP;
-    		char *sysOTPPath = "1:/OTP.BIN";
-    	
-    		if(f_open(&nandOTP, sysOTPPath, FA_READ) != FR_OK) {    			
-    			f_close(&nandOTP);
-    			
-    			if(f_open(&nandOTP, sysOTPPath, FA_WRITE | FA_CREATE_ALWAYS) == FR_OK) {
-    				unsigned int bw;
-					f_write (&nandOTP, (void*)OTP_OFFSET, 256, &bw);
-					f_sync(&nandOTP);
-					f_close(&nandOTP);
-					
-					if (bw == 0) {
-						f_unlink(sysOTPPath);
-					}
-    			}
-    		}
+    		// FIL nandOTP;
+//     		char *sysOTPPath = "1:/OTP.BIN";
+//     	
+//     		if(f_open(&nandOTP, sysOTPPath, FA_READ) != FR_OK) {    			
+//     			f_close(&nandOTP);
+//     			
+//     			if(f_open(&nandOTP, sysOTPPath, FA_WRITE | FA_CREATE_ALWAYS) == FR_OK) {
+//     				unsigned int bw;
+// 					f_write (&nandOTP, (void*)OTP_OFFSET, 256, &bw);
+// 					f_sync(&nandOTP);
+// 					f_close(&nandOTP);
+// 					
+// 					if (bw == 0) {
+// 						f_unlink(sysOTPPath);
+// 					}
+//     			}
+//     		}
     	
 			//Inform the user that the PIN lock has been bypassed
 			if (!drawImage("0:/3dsafe/bypass.bin", 400, 240, 0, 0, SCREEN_TOP)) {
