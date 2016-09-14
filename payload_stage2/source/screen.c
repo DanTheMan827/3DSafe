@@ -99,10 +99,10 @@ void turnOnBacklight()
     i2cWriteRegister(3, 0x22, 0x2A); // 0x2A -> boot into firm with no backlight
 }
 
-void turnOffBacklight()
-{
-    i2cWriteRegister(3, 0x22, 0x16);
-}
+// void turnOffBacklight()
+// {
+//     i2cWriteRegister(3, 0x22, 0x16);
+// }
 
 
 
