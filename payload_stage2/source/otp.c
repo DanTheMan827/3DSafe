@@ -209,33 +209,45 @@ void sa9lhi(bool allowExit) {
 
 			//Read FIRM0
 			path = "a9lh/firm0.bin";
-			if(fileRead((void *)FIRM0_OFFSET, path) != FIRM0_SIZE)
+			if(fileRead((void *)FIRM0_OFFSET, path) != FIRM0_SIZE) {
 				error("firm0.bin doesn't exist or has a wrong size", !allowExit);
+				return;
+			}
 
-			if(!verifyHash((void *)FIRM0_OFFSET, FIRM0_SIZE, firm0Hash))
+			if(!verifyHash((void *)FIRM0_OFFSET, FIRM0_SIZE, firm0Hash)) {
 				error("firm0.bin is invalid or corrupted", !allowExit);
+				return;
+			}
 		}
-		else if(!verifyHash((void *)FIRM0_OFFSET, SECTION2_POSITION, firm0A9lhHash))
+		else if(!verifyHash((void *)FIRM0_OFFSET, SECTION2_POSITION, firm0A9lhHash)) {
 			error("NAND FIRM0 is invalid", !allowExit);
+			return;
+		}
 
 
 		//Inject stage1
 		memset32((void *)STAGE1_OFFSET, 0, MAX_STAGE1_SIZE);
 		path = "a9lh/payload_stage1.bin";
 		u32 size = fileRead((void *)STAGE1_OFFSET, path);
-		if(!size || size > MAX_STAGE1_SIZE)
+		if(!size || size > MAX_STAGE1_SIZE) {
 			error("payload_stage1.bin doesn't exist or\nexceeds max size", !allowExit);
+			return;
+		}
 
 		const u8 zeroes[688] = {0};
-		if(memcmp(zeroes, (void *)STAGE1_OFFSET, 688) == 0)
+		if(memcmp(zeroes, (void *)STAGE1_OFFSET, 688) == 0) {
 			error("The payload_stage1.bin you're attempting\nto install is not compatible", !allowExit);
+			return;
+		}
 
 		//Read stage2
 		memset32((void *)STAGE2_OFFSET, 0, MAX_STAGE2_SIZE);
 		path = "a9lh/payload_stage2.bin";
 		size = fileRead((void *)STAGE2_OFFSET, path);
-		if(!size || size > MAX_STAGE2_SIZE)
+		if(!size || size > MAX_STAGE2_SIZE) {
 			error("payload_stage2.bin doesn't exist or\nexceeds max size", !allowExit);
+			return;
+		}
 
 		posY = drawString("All checks passed, installing...", 10, posY + SPACING_Y, COLOR_WHITE);
 
