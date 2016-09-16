@@ -414,7 +414,7 @@ void bootPayload() {
 	if(f_open(&payload, "arm9loaderhax.bin", FA_READ) == FR_OK) {
 		foundPayload = true;
 	}
-	else if(f_open(&payload, "1:/arm9loaderhax.bin", FA_READ) == FR_OK) {
+	else if(f_open(&payload, "1:/3dsafe/arm9loaderhax.bin", FA_READ) == FR_OK) {
 		foundPayload = true;
 	}
 	
