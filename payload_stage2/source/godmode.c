@@ -16,6 +16,7 @@
 bool enterGodMode() {
 // 	godMode = false;
 
+/*
 	if (!InitSDCardFS()) {
 		return false;
 	}
@@ -23,6 +24,10 @@ bool enterGodMode() {
 	if (!InitNandCrypto()) {
 		return false;
 	}
+	*/
+	
+	InitSDCardFS();
+	InitNandCrypto();
 	
 	if (!InitExtFS()) {
 		return false;

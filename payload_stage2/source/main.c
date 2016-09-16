@@ -410,11 +410,14 @@ void bootPayload() {
 
 	bool foundPayload = false;
 // 	bool deinitScreenBeforeBoot = false;
-	char * payloadFilename;
 
 	if(f_open(&payload, "arm9loaderhax.bin", FA_READ) == FR_OK) {
 		foundPayload = true;
 	}
+	else if(f_open(&payload, "1:/arm9loaderhax.bin", FA_READ) == FR_OK) {
+		foundPayload = true;
+	}
+	
 // 	else if(f_open(&payload, "arm9loaderhax_noscreeninit.bin", FA_READ) == FR_OK) {
 // 		foundPayload = true;
 // 		deinitScreenBeforeBoot = true;
@@ -484,15 +487,15 @@ int main()
     /*
     DEBUG: Allow skipping past everything for brick protection during development
     */
-//     drawString("Press X to skip 3DSafe, any other button to enter 3DSafe", 10, 10, COLOR_RED);
-//     u32 key = waitInput();
-//     if (key == BUTTON_X) {
-// 		FATFS afs;
-// 		f_mount(&afs, "0:", 0); //This never fails due to deferred mounting
-//     	bootPayload();
-//     	return 0;
-//     }
-//     clearScreens(SCREEN_TOP);
+    drawString("Press X to skip 3DSafe, any other button to enter 3DSafe", 10, 10, COLOR_RED);
+    u32 key = waitInput();
+    if (key == BUTTON_X) {
+		FATFS afs;
+		f_mount(&afs, "0:", 0); //This never fails due to deferred mounting
+    	bootPayload();
+    	return 0;
+    }
+    clearScreens(SCREEN_TOP);
     
     /*
 	Enter Godmode to gain access to SysNAND

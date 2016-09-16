@@ -82,12 +82,14 @@ bool mountFS(char * fsname, int i) {
 }
 
 bool InitExtFS() {
+	/*
     if (!fs_mounted[0]) {
     	error("SD not mounted");
         return false;
     }
+    */
     if (!mountFS("1:", 1)) {
-    	error("Can't mount partition 1");
+//     	error("Can't mount partition 1");
     	return false;
     }
     
