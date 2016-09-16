@@ -9,6 +9,12 @@ typedef enum {
     SCREEN_BOTH
 } Screen;
 
+static const struct fb {
+    u8 *top_left;
+    u8 *top_right;
+    u8 *bottom;
+} *const fb = (struct fb *)0x23FFFE00;
+
 #define SPACING_Y   10
 #define SPACING_X   8
 #define COLOR_TITLE 0xFF9900

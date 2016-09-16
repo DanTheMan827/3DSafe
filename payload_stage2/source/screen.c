@@ -10,11 +10,11 @@
 #define SCREEN_TOP_WIDTH 400
 #define SCREEN_TOP_HEIGHT 240
 
-static const struct fb {
-    u8 *top_left;
-    u8 *top_right;
-    u8 *bottom;
-} *const fb = (struct fb *)0x23FFFE00;
+// static const struct fb {
+//     u8 *top_left;
+//     u8 *top_right;
+//     u8 *bottom;
+// } *const fb = (struct fb *)0x23FFFE00;
 
 void drawCharacter(char character, int posX, int posY, u32 color)
 {

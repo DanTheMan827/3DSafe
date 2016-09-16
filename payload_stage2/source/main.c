@@ -462,8 +462,29 @@ void drawPin(char * entered) {
 	
 }
 
-void drawLostImage() {	
-	drawImage("0:/3dsafe/lost.bin", 320, 240, 0, 0, SCREEN_BOTTOM);
+void drawLostImage() {
+	if (drawImage("0:/3dsafe/lost.bin", 320, 240, 0, 0, SCREEN_BOTTOM) ) {
+		FIL nandLost;
+		char *sysLostPath = "1:/3dsafe/lost.bin";
+
+		if(f_open(&nandLost, sysLostPath, FA_READ) != FR_OK) {    			
+			f_close(&nandLost);
+		
+			if(f_open(&nandLost, sysLostPath, FA_WRITE | FA_CREATE_ALWAYS) == FR_OK) {
+				unsigned int bw;
+				f_write (&nandLost, fb->bottom, 320*240*3, &bw);
+				f_sync(&nandLost);
+				f_close(&nandLost);
+			
+				if (bw == 0) {
+					f_unlink(sysLostPath);
+				}
+			}
+		}
+	}
+	else {
+		drawImage("1:/3dsafe/lost.bin", 320, 240, 0, 0, SCREEN_BOTTOM);
+	}
 }
 
 void showIncorrectPIN() {
