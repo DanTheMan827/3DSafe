@@ -312,7 +312,7 @@ void setNewPIN(bool force) {
 void showAbout() {
 	clearScreens(SCREEN_TOP);
 	drawString("About 3DSafe", 10, 10, COLOR_TITLE);
-	drawString("3DSafe 0.6 by mashers", 10, 30, COLOR_WHITE);
+	drawString("3DSafe 0.7 by mashers", 10, 30, COLOR_WHITE);
 	drawString("GitHub repo: http://goo.gl/QLsBx3", 10, 40, COLOR_WHITE);
 
 	drawString("Payloads based on ShadowNAND by RShadowHand", 10, 60, COLOR_WHITE);
