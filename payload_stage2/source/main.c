@@ -15,6 +15,15 @@
 #define A11_PAYLOAD_LOC 0x1FFF4C80 //keep in mind this needs to be changed in the ld script for arm11 too
 #define A11_ENTRY       0x1FFFFFF8
 
+#define DISABLE_PATH "1:/3dsafe/disable"
+
+typedef enum {
+    PIN_STATUS_ALWAYS,
+    PIN_STATUS_NEVER
+} PINStatus;
+
+PINStatus pinStatus = PIN_STATUS_ALWAYS;
+
 bool drewPINImage = false;
 
 static void ownArm11(u32 screenInit)
@@ -313,6 +322,40 @@ void showAbout() {
 	waitInput();
 }
 
+void togglePin() {
+	if (pinStatus == PIN_STATUS_ALWAYS) {
+		FIL f;
+	
+		if(f_open(&f, DISABLE_PATH, FA_WRITE | FA_CREATE_ALWAYS) == FR_OK) {
+			pinStatus = PIN_STATUS_NEVER;
+		}
+		
+		f_close(&f);
+	}
+	else if (pinStatus == PIN_STATUS_NEVER) {
+		if (f_unlink(DISABLE_PATH) == FR_OK) {
+			pinStatus = PIN_STATUS_ALWAYS;
+		}
+	}
+}
+
+bool drawPINStatusImage() {
+	char * pinStatusImagePath = NULL;
+	
+	if (pinStatus == PIN_STATUS_ALWAYS) {
+		pinStatusImagePath = "0:/3dsafe/pinalways.bin";
+	}
+	else if (pinStatus == PIN_STATUS_NEVER) {
+		pinStatusImagePath = "0:/3dsafe/pinnever.bin";
+	}
+	
+	if (pinStatusImagePath != NULL) {
+		return drawImage(pinStatusImagePath, 24, 29, 101, 144, SCREEN_TOP);
+	}
+	
+	return false;
+}
+
 /*
 Show the options menu to the user
 */
@@ -322,18 +365,45 @@ void displayOptions() {
 	//Stay in the while loop until a valid option was selected
 	u32 validOption = 0;
 	
+// 	bool drewOptionsGfx = false;
+	bool drewPINStatusGfx = false;
 	
 	/*
 		Display the options on the screen
 	*/
-	if (!drawImage("0:/3dsafe/options.bin", 400, 240, 0, 0, SCREEN_TOP)) {
+	if (drawImage("0:/3dsafe/options.bin", 400, 240, 0, 0, SCREEN_TOP)) {
+// 		drewOptionsGfx = true;
+		drewPINStatusGfx = drawPINStatusImage();
+		
+		if (!drewPINStatusGfx) {
+			if (pinStatus == PIN_STATUS_ALWAYS) {
+				drawString("Always", 101, 144, COLOR_WHITE);
+			}
+			else if (pinStatus == PIN_STATUS_NEVER) {
+				drawString("Never", 101, 144, COLOR_WHITE);
+			}
+		}
+	}
+	else {
 		clearScreens(SCREEN_TOP);
+		
+		int yPos = 30;
+		
 		drawString("3DSafe Options", 10, 10, COLOR_RED);
-		drawString("START: Boot payload", 10, 30, COLOR_WHITE);
-		drawString("    A: Change PIN", 10, 40, COLOR_WHITE);
-		drawString("    B: Power off", 10, 50, COLOR_WHITE);
-		drawString("    X: SafeA9LHInstaller", 10, 60, COLOR_WHITE);
-		drawString("    Y: About 3DSafe", 10, 70, COLOR_WHITE);
+		
+		yPos = drawString(" START: Boot payload", 10, yPos, COLOR_WHITE);
+		
+		if (pinStatus == PIN_STATUS_ALWAYS) {
+			yPos = drawString("SELECT: Toggle lock (current: always)", 10, yPos, COLOR_WHITE);
+		}
+		else if (pinStatus == PIN_STATUS_NEVER) {
+			yPos = drawString("SELECT: Toggle lock (current: never)", 10, yPos, COLOR_WHITE);
+		}
+		
+		yPos = drawString("     A: Change PIN", 10, yPos, COLOR_WHITE);
+		yPos = drawString("     B: Power off", 10, yPos, COLOR_WHITE);
+		yPos = drawString("     X: SafeA9LHInstaller", 10, yPos, COLOR_WHITE);
+		yPos = drawString("     Y: About 3DSafe", 10, yPos, COLOR_WHITE);
 	}
 
 	while (validOption == 0) {
@@ -345,6 +415,18 @@ void displayOptions() {
 		*/
 		if (key == BUTTON_START || key == BUTTON_A || key == BUTTON_B || key == BUTTON_X || key == BUTTON_Y) {
 			validOption = 1;
+		}
+		
+		else if (key == BUTTON_SELECT) {
+			togglePin();
+			
+			if (drewPINStatusGfx) {
+				drawPINStatusImage();
+			}
+			else {
+				displayOptions();
+				return;
+			}
 		}
 	}
 
@@ -508,15 +590,15 @@ int main()
     /*
     DEBUG: Allow skipping past everything for brick protection during development
     */
-    drawString("Press X to skip 3DSafe, any other button to enter 3DSafe", 10, 10, COLOR_RED);
-    u32 key = waitInput();
-    if (key == BUTTON_X) {
-		FATFS afs;
-		f_mount(&afs, "0:", 0); //This never fails due to deferred mounting
-    	bootPayload();
-    	return 0;
-    }
-    clearScreens(SCREEN_TOP);
+//     drawString("Press X to skip 3DSafe, any other button to enter 3DSafe", 10, 10, COLOR_RED);
+//     u32 key = waitInput();
+//     if (key == BUTTON_X) {
+// 		FATFS afs;
+// 		f_mount(&afs, "0:", 0); //This never fails due to deferred mounting
+//     	bootPayload();
+//     	return 0;
+//     }
+//     clearScreens(SCREEN_TOP);
     
     /*
 	Enter Godmode to gain access to SysNAND
@@ -535,6 +617,15 @@ int main()
 		clearScreens(SCREEN_TOP);
 		sa9lhi(false);
 	}
+	
+	FIL disable;
+	
+	if(f_open(&disable, DISABLE_PATH, FA_READ) == FR_OK) {
+		pinStatus = PIN_STATUS_NEVER;
+    	drawLostImage();
+    	displayOptions();
+    	return 0;
+    }
     
     /*
     OTP BYPASS
