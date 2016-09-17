@@ -206,49 +206,49 @@ uint64_t GetSDCardSize() {
 //     return ret;
 // }
 
-bool CheckWritePermissions(const char* path) {
-    char area_name[16];
-    int pdrv = PathToNumFS(path);
-    u32 perm;
-    
-    if (pdrv == 0) {
-        perm = PERM_SDCARD;
-        snprintf(area_name, 16, "the SD card");
-    } else if ((pdrv == 7) && (GetMountState() == IMG_RAMDRV)) {
-        perm = PERM_RAMDRIVE;
-        snprintf(area_name, 16, "the RAM drive");
-    } else if (((pdrv >= 1) && (pdrv <= 3)) || (GetVirtualSource(path) == VRT_SYSNAND)) {
-        perm = PERM_SYSNAND;
-        snprintf(area_name, 16, "the SysNAND");
-        // check virtual file flags (if any)
-        VirtualFile vfile;
-        if (FindVirtualFile(&vfile, path, 0) && (vfile.flags & VFLAG_A9LH_AREA)) {
-            perm = PERM_A9LH;
-            snprintf(area_name, 16, "A9LH regions");
-        }
-    } else if (((pdrv >= 4) && (pdrv <= 6)) || (GetVirtualSource(path) == VRT_EMUNAND)) {
-        perm = PERM_EMUNAND;
-        snprintf(area_name, 16, "the EmuNAND");
-    } else if (((pdrv >= 7) && (pdrv <= 9)) || (GetVirtualSource(path) == VRT_IMGNAND)) {
-        perm = PERM_IMAGE;
-        snprintf(area_name, 16, "images");
-    } else if (GetVirtualSource(path) == VRT_MEMORY) {
-        perm = PERM_MEMORY;
-        snprintf(area_name, 16, "memory areas");
-    } else {
-        return false;
-    }
-    
-    // check permission, return if already set
-    if ((write_permissions & perm) == perm)
-        return true;
-    
-    // ask the user
-    if (!ShowPrompt(true, "Writing to %s is locked!\nUnlock it now?", area_name))
-        return false;
-        
-    return SetWritePermissions(perm, true);
-}
+// bool CheckWritePermissions(const char* path) {
+//     char area_name[16];
+//     int pdrv = PathToNumFS(path);
+//     u32 perm;
+//     
+//     if (pdrv == 0) {
+//         perm = PERM_SDCARD;
+//         snprintf(area_name, 16, "the SD card");
+//     } else if ((pdrv == 7) && (GetMountState() == IMG_RAMDRV)) {
+//         perm = PERM_RAMDRIVE;
+//         snprintf(area_name, 16, "the RAM drive");
+//     } else if (((pdrv >= 1) && (pdrv <= 3)) || (GetVirtualSource(path) == VRT_SYSNAND)) {
+//         perm = PERM_SYSNAND;
+//         snprintf(area_name, 16, "the SysNAND");
+//         // check virtual file flags (if any)
+//         VirtualFile vfile;
+//         if (FindVirtualFile(&vfile, path, 0) && (vfile.flags & VFLAG_A9LH_AREA)) {
+//             perm = PERM_A9LH;
+//             snprintf(area_name, 16, "A9LH regions");
+//         }
+//     } else if (((pdrv >= 4) && (pdrv <= 6)) || (GetVirtualSource(path) == VRT_EMUNAND)) {
+//         perm = PERM_EMUNAND;
+//         snprintf(area_name, 16, "the EmuNAND");
+//     } else if (((pdrv >= 7) && (pdrv <= 9)) || (GetVirtualSource(path) == VRT_IMGNAND)) {
+//         perm = PERM_IMAGE;
+//         snprintf(area_name, 16, "images");
+//     } else if (GetVirtualSource(path) == VRT_MEMORY) {
+//         perm = PERM_MEMORY;
+//         snprintf(area_name, 16, "memory areas");
+//     } else {
+//         return false;
+//     }
+//     
+//     // check permission, return if already set
+//     if ((write_permissions & perm) == perm)
+//         return true;
+//     
+//     // ask the user
+//     if (!ShowPrompt(true, "Writing to %s is locked!\nUnlock it now?", area_name))
+//         return false;
+//         
+//     return SetWritePermissions(perm, true);
+// }
 
 // bool SetWritePermissions(u32 perm, bool add_perm) {
 //     if ((write_permissions & perm) == perm) { // write permissions already given
@@ -334,11 +334,11 @@ bool GetTempFileName(char* path) {
 }
 
 bool FileSetData(const char* path, const u8* data, size_t size, size_t foffset, bool create) {
-    if (!CheckWritePermissions(path)) return false;
+//     if (!CheckWritePermissions(path)) return false;
     if (PathToNumFS(path) >= 0) {
         UINT bytes_written = 0;
         FIL file;
-        if (!CheckWritePermissions(path)) return false;
+//         if (!CheckWritePermissions(path)) return false;
         if (f_open(&file, path, FA_WRITE | (create ? FA_CREATE_ALWAYS : FA_OPEN_ALWAYS)) != FR_OK)
             return false;
         f_lseek(&file, foffset);
@@ -471,90 +471,90 @@ u32 FileFindData(const char* path, u8* data, u32 size, u32 offset) {
     return found;
 }
 
-bool FileInjectFile(const char* dest, const char* orig, u32 offset) {
-    VirtualFile dvfile;
-    VirtualFile ovfile;
-    FIL ofile;
-    FIL dfile;
-    size_t osize;
-    size_t dsize;
-    
-    bool vdest;
-    bool vorig;
-    bool ret;
-    
-    if (!CheckWritePermissions(dest)) return false;
-    if (strncmp(dest, orig, 256) == 0) {
-        ShowPrompt(false, "Error: Can't inject file into itself");
-        return false;
-    }
-    
-    // open destination
-    if (GetVirtualSource(dest)) {
-        vdest = true;
-        if (!FindVirtualFile(&dvfile, dest, 0))
-            return false;
-        dsize = dvfile.size;
-    } else {
-        vdest = false;
-        if (f_open(&dfile, dest, FA_WRITE | FA_OPEN_EXISTING) != FR_OK)
-            return false;
-        dsize = f_size(&dfile);
-        f_lseek(&dfile, offset);
-        f_sync(&dfile);
-    }
-    
-    // open origin
-    if (GetVirtualSource(orig)) {
-        vorig = true;
-        if (!FindVirtualFile(&ovfile, orig, 0)) {
-            if (!vdest) f_close(&dfile);
-            return false;
-        }
-        osize = ovfile.size;
-    } else {
-        vorig = false;
-        if (f_open(&ofile, orig, FA_READ | FA_OPEN_EXISTING) != FR_OK) {
-            if (!vdest) f_close(&dfile);
-            return false;
-        }
-        osize = f_size(&ofile);
-        f_lseek(&ofile, 0);
-        f_sync(&ofile);
-    }
-    
-    // check file limits
-    if (offset + osize > dsize) {
-        ShowPrompt(false, "Operation would write beyond end of file");
-        if (!vdest) f_close(&dfile);
-        if (!vorig) f_close(&ofile);
-        return false;
-    }
-    
-    ret = true;
-    ShowProgress(0, 0, orig);
-    for (size_t pos = 0; (pos < osize) && ret; pos += MAIN_BUFFER_SIZE) {
-        UINT read_bytes = min(MAIN_BUFFER_SIZE, osize - pos);
-        UINT bytes_read = read_bytes;
-        UINT bytes_written = read_bytes;
-        if ((!vorig && (f_read(&ofile, MAIN_BUFFER, read_bytes, &bytes_read) != FR_OK)) ||
-            (vorig && ReadVirtualFile(&ovfile, MAIN_BUFFER, pos, read_bytes, NULL) != 0))
-            ret = false;
-        if (!ShowProgress(pos + (bytes_read / 2), osize, orig))
-            ret = false;
-        if ((!vdest && (f_write(&dfile, MAIN_BUFFER, read_bytes, &bytes_written) != FR_OK)) ||
-            (vdest && WriteVirtualFile(&dvfile, MAIN_BUFFER, offset + pos, read_bytes, NULL) != 0))
-            ret = false;
-        if (bytes_read != bytes_written)
-            ret = false;
-    }
-    ShowProgress(1, 1, orig);
-    
-    if (!vdest) f_close(&dfile);
-    if (!vorig) f_close(&ofile);
-    
-    return ret;
-}
+// bool FileInjectFile(const char* dest, const char* orig, u32 offset) {
+//     VirtualFile dvfile;
+//     VirtualFile ovfile;
+//     FIL ofile;
+//     FIL dfile;
+//     size_t osize;
+//     size_t dsize;
+//     
+//     bool vdest;
+//     bool vorig;
+//     bool ret;
+//     
+// //     if (!CheckWritePermissions(dest)) return false;
+//     if (strncmp(dest, orig, 256) == 0) {
+//         ShowPrompt(false, "Error: Can't inject file into itself");
+//         return false;
+//     }
+//     
+//     // open destination
+//     if (GetVirtualSource(dest)) {
+//         vdest = true;
+//         if (!FindVirtualFile(&dvfile, dest, 0))
+//             return false;
+//         dsize = dvfile.size;
+//     } else {
+//         vdest = false;
+//         if (f_open(&dfile, dest, FA_WRITE | FA_OPEN_EXISTING) != FR_OK)
+//             return false;
+//         dsize = f_size(&dfile);
+//         f_lseek(&dfile, offset);
+//         f_sync(&dfile);
+//     }
+//     
+//     // open origin
+//     if (GetVirtualSource(orig)) {
+//         vorig = true;
+//         if (!FindVirtualFile(&ovfile, orig, 0)) {
+//             if (!vdest) f_close(&dfile);
+//             return false;
+//         }
+//         osize = ovfile.size;
+//     } else {
+//         vorig = false;
+//         if (f_open(&ofile, orig, FA_READ | FA_OPEN_EXISTING) != FR_OK) {
+//             if (!vdest) f_close(&dfile);
+//             return false;
+//         }
+//         osize = f_size(&ofile);
+//         f_lseek(&ofile, 0);
+//         f_sync(&ofile);
+//     }
+//     
+//     // check file limits
+//     if (offset + osize > dsize) {
+//         ShowPrompt(false, "Operation would write beyond end of file");
+//         if (!vdest) f_close(&dfile);
+//         if (!vorig) f_close(&ofile);
+//         return false;
+//     }
+//     
+//     ret = true;
+//     ShowProgress(0, 0, orig);
+//     for (size_t pos = 0; (pos < osize) && ret; pos += MAIN_BUFFER_SIZE) {
+//         UINT read_bytes = min(MAIN_BUFFER_SIZE, osize - pos);
+//         UINT bytes_read = read_bytes;
+//         UINT bytes_written = read_bytes;
+//         if ((!vorig && (f_read(&ofile, MAIN_BUFFER, read_bytes, &bytes_read) != FR_OK)) ||
+//             (vorig && ReadVirtualFile(&ovfile, MAIN_BUFFER, pos, read_bytes, NULL) != 0))
+//             ret = false;
+//         if (!ShowProgress(pos + (bytes_read / 2), osize, orig))
+//             ret = false;
+//         if ((!vdest && (f_write(&dfile, MAIN_BUFFER, read_bytes, &bytes_written) != FR_OK)) ||
+//             (vdest && WriteVirtualFile(&dvfile, MAIN_BUFFER, offset + pos, read_bytes, NULL) != 0))
+//             ret = false;
+//         if (bytes_read != bytes_written)
+//             ret = false;
+//     }
+//     ShowProgress(1, 1, orig);
+//     
+//     if (!vdest) f_close(&dfile);
+//     if (!vorig) f_close(&ofile);
+//     
+//     return ret;
+// }
 
 bool PathCopyVirtual(const char* destdir, const char* orig, u32* flags) {
     char dest[256]; // maximum path name length in FAT
@@ -883,7 +883,7 @@ bool PathCopyWorker(char* dest, char* orig, u32* flags, bool move) {
 }
 
 bool PathCopy(const char* destdir, const char* orig, u32* flags) {
-    if (!CheckWritePermissions(destdir)) return false;
+//     if (!CheckWritePermissions(destdir)) return false;
         if (flags) *flags = *flags & ~(SKIP_CUR|OVERWRITE_CUR); // reset local flags
     if (GetVirtualSource(destdir) || GetVirtualSource(orig)) {
         // users are inventive...
@@ -903,8 +903,8 @@ bool PathCopy(const char* destdir, const char* orig, u32* flags) {
 }
 
 bool PathMove(const char* destdir, const char* orig, u32* flags) {
-    if (!CheckWritePermissions(destdir)) return false;
-    if (!CheckWritePermissions(orig)) return false;
+//     if (!CheckWritePermissions(destdir)) return false;
+//     if (!CheckWritePermissions(orig)) return false;
     if (flags) *flags = *flags & ~(SKIP_CUR|OVERWRITE_CUR); // reset local flags
     if (GetVirtualSource(destdir) || GetVirtualSource(orig)) {
         ShowPrompt(false, "Error: Moving virtual files not possible");
@@ -953,7 +953,7 @@ bool PathDeleteWorker(char* fpath) {
 
 bool PathDelete(const char* path) {
     char fpath[256]; // 256 is the maximum length of a full path
-    if (!CheckWritePermissions(path)) return false;
+//     if (!CheckWritePermissions(path)) return false;
     strncpy(fpath, path, 256);
     return PathDeleteWorker(fpath);
 }
@@ -962,7 +962,7 @@ bool PathRename(const char* path, const char* newname) {
     char npath[256]; // 256 is the maximum length of a full path
     char* oldname = strrchr(path, '/');
     
-    if (!CheckWritePermissions(path)) return false;
+//     if (!CheckWritePermissions(path)) return false;
     if (!oldname) return false;
     oldname++;
     strncpy(npath, path, oldname - path);
@@ -985,7 +985,7 @@ bool PathRename(const char* path, const char* newname) {
 
 bool DirCreate(const char* cpath, const char* dirname) {
     char npath[256]; // 256 is the maximum length of a full path
-    if (!CheckWritePermissions(cpath)) return false;
+//     if (!CheckWritePermissions(cpath)) return false;
     snprintf(npath, 255, "%s/%s", cpath, dirname);
     return (f_mkdir(npath) == FR_OK);
 }

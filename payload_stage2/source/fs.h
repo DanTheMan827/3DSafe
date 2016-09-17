@@ -53,7 +53,7 @@ uint64_t GetSDCardSize();
 // bool FormatSDCard(u64 hidden_mb, u32 cluster_size);
 
 /** Check if writing to this path is allowed **/
-bool CheckWritePermissions(const char* path);
+// bool CheckWritePermissions(const char* path);
 
 /** Set new write permissions */
 // bool SetWritePermissions(u32 perm, bool add_perm);
@@ -77,7 +77,7 @@ bool FileGetSha256(const char* path, u8* sha256);
 u32 FileFindData(const char* path, u8* data, u32 size, u32 offset);
 
 /** Inject file into file @offset **/
-bool FileInjectFile(const char* dest, const char* orig, u32 offset);
+// bool FileInjectFile(const char* dest, const char* orig, u32 offset);
 
 /** Recursively copy a file or directory **/
 bool PathCopy(const char* destdir, const char* orig, u32* flags);

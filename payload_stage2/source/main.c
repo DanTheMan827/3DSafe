@@ -17,6 +17,13 @@
 
 #define DISABLE_PATH "1:/3dsafe/disable"
 
+#define SD_LOST_PATH "0:/3dsafe/lost.bin"
+#define SYS_LOST_PATH "1:/3dsafe/lost.bin"
+
+#define SD_EBOOT_PATH "0:/3dsafe/emergency.bin"
+#define SYS_EBOOT_PATH "1:/3dsafe/emergency.bin"
+#define SYS_TEMP_EBOOT_PATH "1:/3dsafe/emergencytemp.bin"
+
 typedef enum {
     PIN_STATUS_ALWAYS,
     PIN_STATUS_NEVER
@@ -350,10 +357,101 @@ bool drawPINStatusImage() {
 	}
 	
 	if (pinStatusImagePath != NULL) {
-		return drawImage(pinStatusImagePath, 24, 29, 101, 144, SCREEN_TOP);
+		return drawImage(pinStatusImagePath, 20, 26, 103, 137, SCREEN_TOP);
 	}
 	
 	return false;
+}
+
+void updateNANDFiles() {
+	bool updatedLost = false;
+	bool updatedEBoot = false;
+
+	FIL lostFile;
+
+	if(f_open(&lostFile, SD_LOST_PATH, FA_READ) == FR_OK) {
+		f_close(&lostFile);
+		f_unlink(SYS_LOST_PATH);
+		drawLostImage();
+		updatedLost = true;
+	}
+	
+	FIL eBootFile;
+	
+	if(f_open(&eBootFile, SD_EBOOT_PATH, FA_READ) == FR_OK) {
+		f_close(&eBootFile);
+		
+
+		int chunkSize = 1024;// * 10;
+		u32 readOffset = 0;
+		
+		u8 data[chunkSize];
+		
+		size_t eBootSize = FileGetSize(SD_EBOOT_PATH);
+		
+		bool create = true;
+		bool success = true;
+		
+		while (readOffset < eBootSize) {		
+			size_t bytesToRead;
+			
+			if (eBootSize - readOffset < chunkSize)
+				bytesToRead = eBootSize - readOffset;
+			else
+				bytesToRead = chunkSize;
+
+			size_t read = FileGetData(SD_EBOOT_PATH, &data, bytesToRead, readOffset);
+			
+			if (read==0) {				
+				success = false;
+				break;
+			}
+		
+			if (FileSetData(SYS_TEMP_EBOOT_PATH, data, bytesToRead, readOffset, create)) {
+				create = false;
+				readOffset += bytesToRead;
+			}
+			else {				
+				success = false;
+				break;
+			}			
+		}
+		
+		if (success) {
+			updatedEBoot = true;
+		
+			f_unlink(SYS_EBOOT_PATH);
+			f_rename (SYS_TEMP_EBOOT_PATH, SYS_EBOOT_PATH);
+		}
+		else {
+			error("The emergency payload could not be copied from\nyour SD card to CTRNAND. You should copy the\nfile manually using GodMode9 to the 3dsafe\ndirectory on CTRNAND.", false);
+		}
+	}
+	
+	if (updatedLost || updatedEBoot) {
+		if (!drawImage("0:/3dsafe/nandupdated.bin", 400, 240, 0, 0, SCREEN_TOP)) {
+			clearScreens(SCREEN_TOP);
+			drawString("NAND files updated", 10, 10, COLOR_TITLE);
+			drawString("The following files have been successfully\nupdated on your CTRNAND, and will be available\nfor use even if the SD card is not present.", 10, 30, COLOR_WHITE);
+			drawString("Press any key to continue", 10, 230, COLOR_WHITE);
+		}
+		
+		int yPos = 144;
+		
+		if (updatedLost) {
+			drawString("Owner contact details (lost.bin)", 10, yPos, COLOR_WHITE);
+			yPos += 10;
+		}
+		
+		if (updatedEBoot) {
+			drawString("Emergency boot payload (emergency.bin)", 10, yPos, COLOR_WHITE);
+		}
+		
+		waitInput();
+	}
+	else {
+		error("No files were updated on your NAND. This is\nprobably because the required files are not\npresent on your SD card.", false);
+	}
 }
 
 /*
@@ -377,33 +475,32 @@ void displayOptions() {
 		
 		if (!drewPINStatusGfx) {
 			if (pinStatus == PIN_STATUS_ALWAYS) {
-				drawString("Always", 101, 144, COLOR_WHITE);
+				drawString("Always", 103, 137, COLOR_WHITE);
 			}
 			else if (pinStatus == PIN_STATUS_NEVER) {
-				drawString("Never", 101, 144, COLOR_WHITE);
+				drawString("Never", 103, 137, COLOR_WHITE);
 			}
 		}
 	}
 	else {
 		clearScreens(SCREEN_TOP);
 		
-		int yPos = 30;
-		
 		drawString("3DSafe Options", 10, 10, COLOR_RED);
 		
-		yPos = drawString(" START: Boot payload", 10, yPos, COLOR_WHITE);
+		drawString(" START: Boot payload", 10, 30, COLOR_WHITE);
 		
 		if (pinStatus == PIN_STATUS_ALWAYS) {
-			yPos = drawString("SELECT: Toggle lock (current: always)", 10, yPos, COLOR_WHITE);
+			drawString("SELECT: Toggle lock (current: always)", 10, 40, COLOR_WHITE);
 		}
 		else if (pinStatus == PIN_STATUS_NEVER) {
-			yPos = drawString("SELECT: Toggle lock (current: never)", 10, yPos, COLOR_WHITE);
+			drawString("SELECT: Toggle lock (current: never)", 10, 40, COLOR_WHITE);
 		}
 		
-		yPos = drawString("     A: Change PIN", 10, yPos, COLOR_WHITE);
-		yPos = drawString("     B: Power off", 10, yPos, COLOR_WHITE);
-		yPos = drawString("     X: SafeA9LHInstaller", 10, yPos, COLOR_WHITE);
-		yPos = drawString("     Y: About 3DSafe", 10, yPos, COLOR_WHITE);
+		drawString("     A: Change PIN", 10, 50, COLOR_WHITE);
+		drawString("     B: Power off", 10, 60, COLOR_WHITE);
+		drawString("     X: SafeA9LHInstaller", 10, 70, COLOR_WHITE);
+		drawString("     Y: About 3DSafe", 10, 80, COLOR_WHITE);
+		drawString("     R: Update NAND files (lost image/emergency boot)", 10, 90, COLOR_WHITE);
 	}
 
 	while (validOption == 0) {
@@ -413,7 +510,7 @@ void displayOptions() {
 		/*
 		If the button pressed corresponds to a menu option, break out of the while loop
 		*/
-		if (key == BUTTON_START || key == BUTTON_A || key == BUTTON_B || key == BUTTON_X || key == BUTTON_Y) {
+		if (key == BUTTON_START || key == BUTTON_A || key == BUTTON_B || key == BUTTON_X || key == BUTTON_Y || key == BUTTON_R1) {
 			validOption = 1;
 		}
 		
@@ -477,6 +574,14 @@ void displayOptions() {
 		showAbout();
 		displayOptions();
 	}
+	
+	/*
+	User opted to view about page
+	*/
+	else if (key == BUTTON_R1) {	
+		updateNANDFiles();
+		displayOptions();
+	}
 }
 
 /*
@@ -487,33 +592,29 @@ void bootPayload() {
 	Try to open the payload file
 	*/
 	FIL payload;
-	unsigned int br;
-
+	unsigned int br=0;
 
 	bool foundPayload = false;
-// 	bool deinitScreenBeforeBoot = false;
 
-	if(f_open(&payload, "arm9loaderhax.bin", FA_READ) == FR_OK) {
+	/*
+	Prioritise the payload on the SD card
+	*/
+	if(f_open(&payload, "arm9loaderhax.bin", FA_READ) == FR_OK) {	
 		foundPayload = true;
 	}
-	else if(f_open(&payload, "1:/3dsafe/arm9loaderhax.bin", FA_READ) == FR_OK) {
+	
+	/*
+	Fallback payload on CTRNAND if no SD payload found
+	*/
+	else if(f_open(&payload, SYS_EBOOT_PATH, FA_READ) == FR_OK) {
 		foundPayload = true;
 	}
 	
-// 	else if(f_open(&payload, "arm9loaderhax_noscreeninit.bin", FA_READ) == FR_OK) {
-// 		foundPayload = true;
-// 		deinitScreenBeforeBoot = true;
-// 	}
-	
-	if (foundPayload) {
-// 		if (deinitScreenBeforeBoot) {
-// 			turnOffBacklight();
-// 		}
-	
+	if (foundPayload) {	
 		/*
 		Read the payload and boot it
 		*/
-		f_read(&payload, (void *)PAYLOAD_ADDRESS, f_size(&payload), &br);					
+		f_read(&payload, (void *)PAYLOAD_ADDRESS, f_size(&payload), &br);
 		((void (*)())PAYLOAD_ADDRESS)();
 		i2cWriteRegister(I2C_DEV_MCU, 0x20, 1);
 	}
@@ -545,19 +646,19 @@ void drawPin(char * entered) {
 }
 
 void drawLostImage() {
-	if (!drawImage("1:/3dsafe/lost.bin", 320, 240, 0, 0, SCREEN_BOTTOM)) {
-		if (drawImage("0:/3dsafe/lost.bin", 320, 240, 0, 0, SCREEN_BOTTOM) ) {
+	if (!drawImage(SYS_LOST_PATH, 320, 240, 0, 0, SCREEN_BOTTOM)) {
+		if (drawImage(SD_LOST_PATH, 320, 240, 0, 0, SCREEN_BOTTOM) ) {
 			FIL nandLost;
-			char *sysLostPath = "1:/3dsafe/lost.bin";
+			
 
-			if(f_open(&nandLost, sysLostPath, FA_WRITE | FA_CREATE_ALWAYS) == FR_OK) {
+			if(f_open(&nandLost, SYS_LOST_PATH, FA_WRITE | FA_CREATE_ALWAYS) == FR_OK) {
 				unsigned int bw;
 				f_write (&nandLost, fb->bottom, 320*240*3, &bw);
 				f_sync(&nandLost);
 				f_close(&nandLost);
 		
 				if (bw == 0) {
-					f_unlink(sysLostPath);
+					f_unlink(SYS_LOST_PATH);
 				}
 			}
 		}
