@@ -712,14 +712,21 @@ int main()
 // 		otpIsValid("OTP.BIN", OTP_LOCATION_DISK);
 		clearScreens(SCREEN_TOP);
 		sa9lhi(false);
+		return 0;
 	}
 	
 	FIL disable;
 	
 	if(f_open(&disable, DISABLE_PATH, FA_READ) == FR_OK) {
-		pinStatus = PIN_STATUS_NEVER;
-    	drawLostImage();
-    	displayOptions();
+		if (HID_PAD == BUTTON_UP) {
+			pinStatus = PIN_STATUS_NEVER;
+    		drawLostImage();
+    		displayOptions();
+		}
+		else {
+			bootPayload();
+		}
+		
     	return 0;
     }
     
