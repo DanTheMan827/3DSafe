@@ -8,7 +8,7 @@
 * What to do if you forget your PIN
 * A warning about safeguarding your PIN and OTP
 * Testing and disclaimer
-* Installation instructions
+* [Installation](INSTALLATION.md)
 * Updating instructions
 * Usage instructions
 * Credits
