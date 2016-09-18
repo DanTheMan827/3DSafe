@@ -11,7 +11,7 @@
 * [Installation](INSTALLATION.md)
 * [Updating](UPDATE.md)
 * [Usage](USAGE.md)
-* Credits
+* [Credits](CREDITS.md)
 
 
 # If you forget your PIN
@@ -26,17 +26,3 @@ I reiterate: ***BEFORE*** **installing 3DSafe, make two NAND backups, verify tha
 
 # Testing and disclaimer
 I have tested this on my EUR n3DS. I make absolutely no guarantee that it will work for anybody else. Since you are writing these payloads to sysNAND, there is a possibility that you will brick your 3DS. I take absolutely no responsibility for this. Do not install this unless you know exactly what you are doing. I highly recommend that you take a NAND backup before installing this, and preferably have a hardmod before installing.
-
-
-# Credits
-This project is based on ShadowNAND by @RShadowhand, from which it is forked. All credit for the original payload is inherited from this project and the projects on which it is based in turn. The modifications in 3DSafe are by @mashers.
-
-3DSafe incorporates parts of GodMode9 by d0k3 for reading and writing the PIN from/to NAND. Credit for the code in 3DSafe which is taken from GodMode9 and modified by mashers is given to d0k and the other contributors to the GodMode9 project. This includes the following components of 3DSafe:
-* godmode.c
-* godmode.h
-* fatfs (modified to mount/read/write 3DS NAND partitions)
-* nand
-
-3DSafe includes an integrated version of SafeA9LHInstaller by AuroraWright.
-
-The emergency boot payload is a cut-down version of Luma3DS by AuroraWright.
