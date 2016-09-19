@@ -697,6 +697,18 @@ bool getPINFromNAND(char storedPin[PIN_MAX_LENGTH+1]) {
 	}
 }
 
+#define CFG_BOOTENV    (*(vu32 *)0x10010000)
+
+void bootOrOptions() {
+	if (HID_PAD == BUTTON_UP) {
+		drawLostImage();
+		displayOptions();
+	}
+	else {
+		bootPayload();
+	}
+}
+
 int main()
 {
     /*
@@ -739,17 +751,13 @@ int main()
 	FIL disable;
 	
 	if(f_open(&disable, DISABLE_PATH, FA_READ) == FR_OK) {
-		if (HID_PAD == BUTTON_UP) {
-			pinStatus = PIN_STATUS_NEVER;
-    		drawLostImage();
-    		displayOptions();
-		}
-		else {
-			bootPayload();
-		}
-		
-    	return 0;
-    }
+		pinStatus = PIN_STATUS_NEVER;
+	}
+	
+	if (pinStatus == PIN_STATUS_NEVER || CFG_BOOTENV) {
+		bootOrOptions();
+		return 0;
+	}
     
     /*
     OTP BYPASS
