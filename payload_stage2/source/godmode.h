@@ -12,4 +12,4 @@
 // extern bool godMode;
 
 bool enterGodMode();
-bool getPINFromNAND(char storedPin[9]);
+//bool getPINFromNAND(char storedPin[9]);

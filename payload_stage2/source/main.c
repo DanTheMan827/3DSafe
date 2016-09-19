@@ -24,6 +24,8 @@
 #define SYS_EBOOT_PATH "1:/3dsafe/emergency.bin"
 #define SYS_TEMP_EBOOT_PATH "1:/3dsafe/emergencytemp.bin"
 
+#define PIN_MAX_LENGTH 10
+
 typedef enum {
     PIN_STATUS_ALWAYS,
     PIN_STATUS_NEVER
@@ -162,12 +164,12 @@ void setNewPIN(bool force) {
 	//Flag to keep us inside the while loop to keep entering characters
 	u32 getPIN = 1;
 	//Buffer for the entered values
-	char entered[8];
+	char entered[PIN_MAX_LENGTH];
 	//Start at the beginning of the buffer
 	u32 pinPos = 0;
 
 	//Clear the buffer
-	for (int i=0; i<8; i++) {
+	for (int i=0; i<PIN_MAX_LENGTH; i++) {
 		entered[i] = '\0';
 	}
 	
@@ -237,9 +239,9 @@ void setNewPIN(bool force) {
 				pinPos++;
 				
 				/*
-				If 8 characters have been entered, break out of the while loop
+				If enough characters have been entered, break out of the while loop
 				*/
-				if (pinPos >= 8) {
+				if (pinPos >= PIN_MAX_LENGTH) {
 					getPIN = 0;
 				}
 			}
@@ -270,7 +272,7 @@ void setNewPIN(bool force) {
 		Write the PIN to the file
 		*/
 		unsigned int bw;
-		f_write (&pinFile, entered, 8, &bw);
+		f_write (&pinFile, entered, PIN_MAX_LENGTH, &bw);
 		f_sync(&pinFile);
 		f_close(&pinFile);
 	
@@ -676,6 +678,25 @@ void showIncorrectPIN() {
 	}
 }
 
+bool getPINFromNAND(char storedPin[PIN_MAX_LENGTH+1]) {
+	//Read a file from NAND
+	u8 pinData[PIN_MAX_LENGTH];
+	size_t pinFileSize = FileGetData("1:/3dsafe/pin.txt", pinData, PIN_MAX_LENGTH, 0);
+
+	if (pinFileSize > 0) {
+		for (int i=0; i<PIN_MAX_LENGTH; i++) {
+			storedPin[i] = pinData[i] + 0;
+		}
+		
+		storedPin[PIN_MAX_LENGTH] = '\0';
+	
+		return true;
+	}
+	else {
+		return false;
+	}
+}
+
 int main()
 {
     /*
@@ -810,7 +831,7 @@ int main()
 	Try to read the PIN file from SysNAND
 	*/
 	//File read buffer
-	char pin[9];
+	char pin[PIN_MAX_LENGTH+1];
     
     if (!getPINFromNAND(pin)) {
 	    //If no PIN could be read from NAND, try creating a new one

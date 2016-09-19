@@ -37,34 +37,3 @@ bool enterGodMode() {
 	return true;
 }
 
-bool getPINFromNAND(char storedPin[9]) {
-	//Read a file from NAND
-	u8 pinData[8];
-	size_t pinFileSize = FileGetData("1:/3dsafe/pin.txt", pinData, 8, 0);
-
-	if (pinFileSize > 0) {
-// 		char pinChars[8];
-		
-		for (int i=0; i<8; i++) {
-			storedPin[i] = pinData[i] + 0;
-		}
-		
-		storedPin[8] = '\0';
-		
-// 		memcpy(storedPin, &pinChars, 8);
-		
-// 		drawString(storedPin, 10, 10, COLOR_RED);
-// 		waitInput();
-// 		clearScreens();
-	
-		return true;
-// 		drawString("Read some bytes from NAND", 10, 10, COLOR_RED);
-	}
-	else {
-		return false;
-// 		drawString("Failed to read from NAND", 10, 10, COLOR_RED);
-	}
-
-// 	waitInput();
-// 	clearScreens();
-}
