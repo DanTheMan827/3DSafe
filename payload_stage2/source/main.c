@@ -906,7 +906,31 @@ int main()
 	If the entered PIN matches what is expected, display the options to the user
 	*/
 	if (strcmp(pin, entered) == 0) {
-		displayOptions();
+		u32 volatile i=0;
+	
+		while(i<5000000) {
+			i++;
+		}
+		
+		char last = entered[pinlen-1];
+		
+		u32 key = HID_PAD;
+		char current = translateButton(key);
+		
+		if (current == last) {
+// 			clearScreens(SCREEN_TOP);
+// 			drawString("Held last key - show options", 10, 40, COLOR_WHITE);
+// 			waitInput();
+		
+			displayOptions();
+		}
+		else {
+// 			clearScreens(SCREEN_TOP);
+// 			drawString("Didn't hold last key - boot", 10, 40, COLOR_WHITE);
+// 			waitInput();
+		
+			bootPayload();
+		}
 	}
 	
 	/*
