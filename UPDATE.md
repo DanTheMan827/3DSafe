@@ -5,7 +5,9 @@ If you have not yet installed 3DSafe but are using a different A9LH payload, ple
 
 ## Updating
 1. Download and extract the latest 3DSafe release, and copy payload_stage1.bin and payload_stage2.bin to the a9lh folder on the root directory of your 3DS SD card
+2. If you have created an owner details image (lost.bin), copy this from your SD card to your computer
 2. Delete the 3dsafe folder on the root of your SD card, and copy the 3dsafe folder from the 3DSafe release to the root of your SD card
+3. If you copied lost.bin to your computer in step 2, copy it back to the 3dsafe folder on your SD card
 3. Boot your 3DS and enter your PIN
 4. From the 3DSafe options screen, press X to run SafeA9LHInstaller
 5. Press SELECT to begin updating. The process takes less than a second.
