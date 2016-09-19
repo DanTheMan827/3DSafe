@@ -11,3 +11,4 @@ If you have not yet installed 3DSafe but are using a different A9LH payload, ple
 5. Press SELECT to begin updating. The process takes less than a second.
 6. When prompted, press any key to shut down your 3DS
 7. Power on and confirm that the update was successful by checking the version number on the About page
+8. If you are using the default 3DSafe emergency boot payload, you should update it in case there were changes made since the last version of 3DSafe you had installed. You can do this by pressing the R button from the 3DSafe options menu
