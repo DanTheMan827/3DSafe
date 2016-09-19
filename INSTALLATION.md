@@ -3,13 +3,13 @@
 
 
 ## Installation instructions
-# Preliminary reading
+### Preliminary reading
 Make sure you have read these [important warnings and disclaimer](WARNINGS.md) before beginning installation.
 
-# Installing over older A9LH payloads
+### Installing over older A9LH payloads
 If you are on the old version 1 of arm9loaderhax, then you will need to update to the latest version before installing 3DSafe to ensure all the correct files are in place. To do so, please follow [this guide](https://github.com/Plailect/Guide/wiki/Updating-arm9loaderhax). After this, you can continue to follow these instructions to install 3DSafe.
 
-# Installation procedure
+### Installation procedure
 1. Make a NAND backup. This is essential, as if something goes wrong during installation you will be able to restore it (but you'll need a hardmod to do this)
 2. Store your NAND backup safely along with your OTP. You will need these if you forget the PIN.
 3. Download and extract the latest 3DSafe release, and copy payload_stage1.bin and payload_stage2.bin to the a9lh folder on the root directory of your 3DS SD card
