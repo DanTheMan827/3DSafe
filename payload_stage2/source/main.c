@@ -182,7 +182,7 @@ void setNewPIN(bool force) {
 	
 	if (!drewGraphicalChangePrompt) {
 		clearScreens(SCREEN_TOP);
-		drawString("Enter new PIN using ABXY and D-Pad (max. 8 characters)", 10, 10, COLOR_RED);
+		drawString("Enter new PIN using ABXY and D-Pad", 10, 10, COLOR_RED);
 		drawString("Press START when done", 10, 30, COLOR_WHITE);
 		if (!force) {
 			drawString("Press SELECT to cancel", 10, 40, COLOR_WHITE);
@@ -314,7 +314,7 @@ void setNewPIN(bool force) {
 void showAbout() {
 	clearScreens(SCREEN_TOP);
 	drawString("About 3DSafe", 10, 10, COLOR_TITLE);
-	drawString("3DSafe 0.8 by mashers", 10, 30, COLOR_WHITE);
+	drawString("3DSafe 0.9 by mashers", 10, 30, COLOR_WHITE);
 	drawString("GitHub repo: http://goo.gl/QLsBx3", 10, 40, COLOR_WHITE);
 
 	drawString("Payloads based on ShadowNAND by RShadowHand", 10, 60, COLOR_WHITE);
