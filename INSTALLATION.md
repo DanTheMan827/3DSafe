@@ -14,15 +14,16 @@ If you are on the old version 1 of arm9loaderhax, then you will need to update t
 2. Store your NAND backup safely along with your OTP. You will need these if you forget the PIN.
 3. Download and extract the latest 3DSafe release, and copy payload_stage1.bin and payload_stage2.bin to the a9lh folder on the root directory of your 3DS SD card
 4. Copy the 3dsafe folder from the 3DSafe release to the root of your SD card
-4. Run SafeA9LHInstaller according to its instructions to install the payloads
-5. Power off your 3DS and power back on, and you will be prompted to set a new PIN
-6. After entering a PIN, you will be able to boot your 3DS
-7. Reboot your 3DS and confirm that your PIN unlocks it
-8. Once you are back at the 3DSafe options menu, press the R button. This will copy the emergency boot payload to your NAND, so you will be able to boot without your SD card inserted
-9. Power off your 3DS. Remove the SD card and power back on. Enter your PIN, and then press START to boot the payload. Confirm that you are able to boot without the SD card inserted. Then power off your 3DS
-9. Copy your otp.bin to the root of your SD card, reinsert the SD card into your 3DS, and power on
-10. When 3DSafe starts up, confirm that your OTP has successfully circumvented the PIN lock. This will ensure that you have a valid OTP to bypass the PIN lock if you ever forget your 3DSafe PIN
-11. Delete the otp.bin from the root of your SD card. Make sure you have multiple backups of this file elsewhere than your 3DS SD card. It's only a small file, so I recommend emailing it to yourself, putting it on a Dropbox, uploading it to a web host, burning it to a disc, putting it on a memory stick, or as many of these as is possible.
+5. Check the MD5 sums of both payloads on the SD card using [these instructions](MD5.md).
+6. Run SafeA9LHInstaller according to its instructions to install the payloads
+7. Power off your 3DS and power back on, and you will be prompted to set a new PIN
+8. After entering a PIN, you will be able to boot your 3DS
+9. Reboot your 3DS and confirm that your PIN unlocks it
+10. Once you are back at the 3DSafe options menu, press the R button. This will copy the emergency boot payload to your NAND, so you will be able to boot without your SD card inserted
+11. Power off your 3DS. Remove the SD card and power back on. Enter your PIN, and then press START to boot the payload. Confirm that you are able to boot without the SD card inserted. Then power off your 3DS
+12. Copy your otp.bin to the root of your SD card, reinsert the SD card into your 3DS, and power on
+13. When 3DSafe starts up, confirm that your OTP has successfully circumvented the PIN lock. This will ensure that you have a valid OTP to bypass the PIN lock if you ever forget your 3DSafe PIN
+14. Delete the otp.bin from the root of your SD card. Make sure you have multiple backups of this file elsewhere than your 3DS SD card. It's only a small file, so I recommend emailing it to yourself, putting it on a Dropbox, uploading it to a web host, burning it to a disc, putting it on a memory stick, or as many of these as is possible.
 
 
 ## How to create a 'lost' message for the bottom screen
