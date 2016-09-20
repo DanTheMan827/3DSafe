@@ -3,6 +3,7 @@
 
 ## Checking 3DSafe payload MD5 sums
 The release notes for each version of 3DSafe now include the MD5 sums for each of the payload files. It is important to check the MD5 sums of each file and compare then to the sums shown in the release notes. This will ensure that the files were downloaded, extracted and copied without corruption. Installing a corrupt payload could brick your 3DS, so it is extremely important to check the MD5 sums before installing or updating 3DSafe.
+
 1. Copy the payload files to your SD card as per the installation/update instructions.
 2. Open a new browser window and go to [onlinemd5.com](http://onlinemd5.com).
 3. Copy the MD5 sum for payload_stage1.bin into the 'compare with' field.
