@@ -95,7 +95,7 @@ void bootPayload();
 void displayOptions();
 
 void drawPINText(char * entered) {
-	drawString(entered, 10, 30, COLOR_WHITE);
+	drawString(entered, 10, 60, COLOR_WHITE);
 }
 
 void drawPINGfx(char * entered) {
@@ -164,12 +164,13 @@ void setNewPIN(bool force) {
 	//Flag to keep us inside the while loop to keep entering characters
 	u32 getPIN = 1;
 	//Buffer for the entered values
-	char entered[PIN_MAX_LENGTH];
+	int bufferSize = PIN_MAX_LENGTH+1;
+	char entered[bufferSize];
 	//Start at the beginning of the buffer
 	u32 pinPos = 0;
 
 	//Clear the buffer
-	for (int i=0; i<PIN_MAX_LENGTH; i++) {
+	for (int i=0; i<bufferSize; i++) {
 		entered[i] = '\0';
 	}
 	
@@ -502,7 +503,7 @@ void displayOptions() {
 		drawString("     B: Power off", 10, 60, COLOR_WHITE);
 		drawString("     X: SafeA9LHInstaller", 10, 70, COLOR_WHITE);
 		drawString("     Y: About 3DSafe", 10, 80, COLOR_WHITE);
-		drawString("     R: Update NAND files (lost image/emergency boot)", 10, 90, COLOR_WHITE);
+		drawString("     R: Update NAND files\n        (lost image/emergency boot)", 10, 90, COLOR_WHITE);
 	}
 
 	while (validOption == 0) {
