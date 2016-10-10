@@ -12,4 +12,4 @@
 * [Credits](CREDITS.md)
 
 
-# [Help, I forgot my PIN!](FORGOT.md)
+## [Help, I forgot my PIN!](FORGOT.md)
