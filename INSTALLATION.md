@@ -11,7 +11,7 @@ If you are on the old version 1 of arm9loaderhax, then you will need to update t
 
 ### Installation procedure
 1. Make a NAND backup. This is essential, as if something goes wrong during installation you will be able to restore it (but you'll need a hardmod to do this)
-2. Store your NAND backup safely along with your OTP. You will need these if you forget the PIN.
+2. Store your NAND backup safely.
 3. Download and extract the latest 3DSafe release, and copy payload_stage1.bin and payload_stage2.bin to the a9lh folder on the root directory of your 3DS SD card
 4. Copy the 3dsafe folder from the 3DSafe release to the root of your SD card
 5. Check the MD5 sums of both payloads on the SD card using [these instructions](MD5.md).
@@ -21,9 +21,11 @@ If you are on the old version 1 of arm9loaderhax, then you will need to update t
 9. Reboot your 3DS and confirm that your PIN unlocks it
 10. Once you are back at the 3DSafe options menu, press the R button. This will copy the emergency boot payload to your NAND, so you will be able to boot without your SD card inserted
 11. Power off your 3DS. Remove the SD card and power back on. Enter your PIN, and then press START to boot the payload. Confirm that you are able to boot without the SD card inserted. Then power off your 3DS
-12. Copy your otp.bin to the root of your SD card, reinsert the SD card into your 3DS, and power on
-13. When 3DSafe starts up, confirm that your OTP has successfully circumvented the PIN lock. This will ensure that you have a valid OTP to bypass the PIN lock if you ever forget your 3DSafe PIN
-14. Delete the otp.bin from the root of your SD card. Make sure you have multiple backups of this file elsewhere than your 3DS SD card. It's only a small file, so I recommend emailing it to yourself, putting it on a Dropbox, uploading it to a web host, burning it to a disc, putting it on a memory stick, or as many of these as is possible.
+12. Re-insert your SD card and power up your 3DS
+13. Enter your PIN and enter the 3DSafe options. Press the L button to dump sha.bin to the root of your SD card. This file is used to bypass the PIN lock if you forget your PIN.
+14. Once sha.bin has been dumped to your SD card, reboot your 3DS. You should see a message saying that the PIN was bypassed
+15. Copy sha.bin to your computer and keep it very safe. You will need it if you forget your PIN. It's only a small file, so I recommend emailing it to yourself, putting it on a Dropbox, uploading it to a web host, burning it to a disc, putting it on a memory stick, or as many of these as is possible.
+16. Delete sha.bin from your 3DS SD card, reboot, and confirm that the PIN lock is no longer bypassed
 
 
 ## How to create a 'lost' message for the bottom screen
