@@ -10,6 +10,7 @@
 #include "godmode.h"
 #include "otp.h"
 #include "fs.h"
+// #include "crypto.h"
 
 #define PAYLOAD_ADDRESS 0x23F00000
 #define A11_PAYLOAD_LOC 0x1FFF4C80 //keep in mind this needs to be changed in the ld script for arm11 too
@@ -315,7 +316,7 @@ void setNewPIN(bool force) {
 void showAbout() {
 	clearScreens(SCREEN_TOP);
 	drawString("About 3DSafe", 10, 10, COLOR_TITLE);
-	drawString("3DSafe 0.10 by mashers", 10, 30, COLOR_WHITE);
+	drawString("3DSafe 0.11 by mashers", 10, 30, COLOR_WHITE);
 	drawString("GitHub repo: http://goo.gl/QLsBx3", 10, 40, COLOR_WHITE);
 
 	drawString("Payloads based on ShadowNAND by RShadowHand", 10, 60, COLOR_WHITE);
@@ -360,7 +361,7 @@ bool drawPINStatusImage() {
 	}
 	
 	if (pinStatusImagePath != NULL) {
-		return drawImage(pinStatusImagePath, 20, 26, 103, 137, SCREEN_TOP);
+		return drawImage(pinStatusImagePath, 20, 26, 171, 108, SCREEN_TOP);
 	}
 	
 	return false;
@@ -513,7 +514,7 @@ void displayOptions() {
 		/*
 		If the button pressed corresponds to a menu option, break out of the while loop
 		*/
-		if (key == BUTTON_START || key == BUTTON_A || key == BUTTON_B || key == BUTTON_X || key == BUTTON_Y || key == BUTTON_R1) {
+		if (key == BUTTON_START || key == BUTTON_A || key == BUTTON_B || key == BUTTON_X || key == BUTTON_Y || key == BUTTON_R1 || key == BUTTON_L1) {
 			validOption = 1;
 		}
 		
@@ -583,6 +584,25 @@ void displayOptions() {
 	*/
 	else if (key == BUTTON_R1) {	
 		updateNANDFiles();
+		displayOptions();
+	}
+	
+	/*
+	User opted to dump SHA
+	*/
+	else if (key == BUTTON_L1) {	
+		if (saveSHA()) {
+			if (!drawImage("0:/3dsafe/shadumped.bin", 400, 240, 0, 0, SCREEN_TOP)) {
+				clearScreens(SCREEN_TOP);
+				drawString("The SHA bypass file has been dumped to your SD\ncard. This file will bypass the requirement to\nenter your PIN.\n \nYou should now do the following:\n \n1. Reboot your 3DS to ensure the bypass works\n2. Store the SHA file safely somewhere other\n   than your 3DS\n3. Remove the SHA file from your 3DS SD card\n \nPress any key to continue.", 10, 10, COLOR_WHITE);
+			}
+		
+			waitInput();
+		}
+		else {
+			error("SHA dump failed.", false);
+		}
+		
 		displayOptions();
 	}
 }
@@ -759,6 +779,53 @@ int main()
 		bootOrOptions();
 		return 0;
 	}
+	
+	/*
+	SHA BYPASS
+	*/
+	SHACheckResult SHAResult = checkSHA();
+	
+	if (SHAResult != SHACheckResultNoFile) {
+		drawLostImage();
+	
+		if (SHAResult == SHACheckResultValid) {
+			if (!drawImage("0:/3dsafe/bypass.bin", 400, 240, 0, 0, SCREEN_TOP)) {
+				clearScreens(SCREEN_TOP);
+				drawString("PIN LOCK BYPASSED.\n \nYour device is not currently protected by\n3DSafe because your sha.bin is in the root\nof your SD card. You should remove this\nfile to ensure your device is protected\nby 3DSafe.\n \nPress any key to continue.", 10, 10, COLOR_RED);
+			}
+			
+			waitInput();
+			
+			displayOptions();
+			return 0;
+		}
+		else if (SHAResult == SHACheckResultInvalid) {
+			error("SHA bypass failed. Press any key to enter PIN.", false);
+		}
+	}
+    
+//     FIL shaFile;
+//     
+//     if(f_open(&shaFile, SHA_PATH, FA_READ) == FR_OK) {
+// 		drawLostImage();
+// 		
+// 		u8 shasum[0x20];
+// 		unsigned int read;
+// 		
+// 		f_read(&shaFile, (void*)shasum, 0x20, &read);
+// 		
+// 		if (memcmp((void*)shasum, (void *)REG_SHA_HASH, 0x20) == 0) {
+// 			error("Bypassed with SHA", false);
+// 			clearScreens(SCREEN_TOP);
+// 			displayOptions();
+// 			return 0;
+// 		}
+// 		else {
+// 			error("Invalid SHA", false);
+// 		}
+// 		
+// 		return 0;
+// 	}
     
     /*
     OTP BYPASS
@@ -767,60 +834,42 @@ int main()
     */
 //     FATFS otpFS;
 // 	f_mount(&otpFS, "0:", 0);
-    FIL otp;
-    char * otpPath = "0:/OTP.BIN";
-    
-    /*
-    An otp.bin was found. Check if it is valid for this console
-    */
-    if(f_open(&otp,otpPath, FA_READ) == FR_OK) {
-    	drawLostImage();
-    
-    	if (otpIsValid(otpPath, OTP_LOCATION_DISK)) {
-    		// FIL nandOTP;
-//     		char *sysOTPPath = "1:/OTP.BIN";
-//     	
-//     		if(f_open(&nandOTP, sysOTPPath, FA_READ) != FR_OK) {    			
-//     			f_close(&nandOTP);
-//     			
-//     			if(f_open(&nandOTP, sysOTPPath, FA_WRITE | FA_CREATE_ALWAYS) == FR_OK) {
-//     				unsigned int bw;
-// 					f_write (&nandOTP, (void*)OTP_OFFSET, 256, &bw);
-// 					f_sync(&nandOTP);
-// 					f_close(&nandOTP);
-// 					
-// 					if (bw == 0) {
-// 						f_unlink(sysOTPPath);
-// 					}
-//     			}
-//     		}
-    	
-			//Inform the user that the PIN lock has been bypassed
-			if (!drawImage("0:/3dsafe/bypass.bin", 400, 240, 0, 0, SCREEN_TOP)) {
-				drawString("PIN LOCK BYPASSED. Press any key to enter 3DSafe options", 10, 10, COLOR_RED);
-			}
-			
-			//Wait for a keypress
-			waitInput();
-			clearScreens(SCREEN_TOP);
-			//Jump straight to the options menu without asking for the PIN
-			displayOptions();
-			return 0;
-		}
-		else {
-			//Inform the user that the OTP is invalid
-			if (!drawImage("0:/3dsafe/invalidotp.bin", 400, 240, 0, 0, SCREEN_TOP)) {
-				clearScreens(SCREEN_TOP);
-				drawString("INVALID otp.bin. Press any key to proceed to enter PIN.", 10, 10, COLOR_RED);
-			}
-			
-			//Wait for a keypress
-			waitInput();
-			clearScreens(SCREEN_TOP);
-						
-			//Continue as normal from this point (request PIN)
-		}
-    }
+    // FIL otp;
+//     char * otpPath = "0:/OTP.BIN";
+//     
+//     /*
+//     An otp.bin was found. Check if it is valid for this console
+//     */
+//     if(f_open(&otp,otpPath, FA_READ) == FR_OK) {
+//     	drawLostImage();
+//     
+//     	if (otpIsValid(otpPath, OTP_LOCATION_DISK)) {    	
+// 			//Inform the user that the PIN lock has been bypassed
+// 			if (!drawImage("0:/3dsafe/bypass.bin", 400, 240, 0, 0, SCREEN_TOP)) {
+// 				drawString("PIN LOCK BYPASSED. Press any key to enter 3DSafe options", 10, 10, COLOR_RED);
+// 			}
+// 			
+// 			//Wait for a keypress
+// 			waitInput();
+// 			clearScreens(SCREEN_TOP);
+// 			//Jump straight to the options menu without asking for the PIN
+// 			displayOptions();
+// 			return 0;
+// 		}
+// 		else {
+// 			//Inform the user that the OTP is invalid
+// 			if (!drawImage("0:/3dsafe/invalidotp.bin", 400, 240, 0, 0, SCREEN_TOP)) {
+// 				clearScreens(SCREEN_TOP);
+// 				drawString("INVALID otp.bin. Press any key to proceed to enter PIN.", 10, 10, COLOR_RED);
+// 			}
+// 			
+// 			//Wait for a keypress
+// 			waitInput();
+// 			clearScreens(SCREEN_TOP);
+// 						
+// 			//Continue as normal from this point (request PIN)
+// 		}
+//     }
     
     //Unmount existing FS in case it interferes with entering God Mode
 //     f_mount(NULL, "0:", 0);

@@ -40,14 +40,8 @@ static const u8 firm0A9lhHash[0x20] = {
 
 #define SECTION2_POSITION 0x66A00
 
-bool OTPChecked = false;
-bool validOTPFound = false;
-
 u32 fileRead(void *dest, const char *path)
 {
-// 	FATFS otpFS;
-// 	f_mount(&otpFS, "0:", 0);
-
     FIL file;
     u32 size;
 
@@ -62,7 +56,6 @@ u32 fileRead(void *dest, const char *path)
     	size = 0;
     }
 
-// 	f_mount(NULL, "0:", 0);
     return size;
 }
 
@@ -76,25 +69,45 @@ u32 checkOTPMatch() {
 	return i;
 }
 
-bool otpIsValid(char * path, OTPLocation location) {
-	OTPChecked = true;
-	validOTPFound = true;
+SHACheckResult checkSHA() {
+	FIL shaFile;
+    
+    if(f_open(&shaFile, SHA_PATH, FA_READ) != FR_OK) {
+    	return SHACheckResultNoFile;
+    }
+	
+	u8 shasum[0x20];
+	unsigned int read;
+	
+	f_read(&shaFile, (void*)shasum, 0x20, &read);
+	
+	if (memcmp((void*)shasum, (void *)REG_SHA_HASH, 0x20) == 0) {
+		return SHACheckResultValid;
+	}
+	else {
+		return SHACheckResultInvalid;
+	}
 
-	/*
-	Read the OTP into memory
-	*/
-	if (location == OTP_LOCATION_DISK) {
-		if(fileRead((void *)OTP_OFFSET, path) != 256) {		
-			validOTPFound = false;
-			return false;
-		}
+}
+
+void sa9lhi(bool allowExit) {
+
+	if (!allowExit && checkSHA() != SHACheckResultValid) {
+		error("Can't run SafeA9LHInstaller as no valid sha.bin\nfound. Ensure sha.bin is on your SD card.", true);
+		return;
 	}
 	
+	
+	
+	
+	
+	
+
 	/*
 	Set up crypto stuff for OTP verification
 	*/
 	
-	setupKeyslot0x11((location == OTP_LOCATION_MEMORY), (void *)OTP_OFFSET);
+	setupKeyslot0x11(true, (void *)OTP_OFFSET);
 	getNandCTR();
 	
 	/*
@@ -102,8 +115,8 @@ bool otpIsValid(char * path, OTPLocation location) {
 	*/
 	readFirm0((u8 *)FIRM0_OFFSET, FIRM0_SIZE);
     if(memcmp((void *)FIRM0_OFFSET, "FIRM", 4) != 0) {
-    	validOTPFound = false;
-    	return false;
+    	error("Could not decrypt FIRM0 partition", !allowExit);
+		return;
     }
 
 	/*
@@ -111,64 +124,16 @@ bool otpIsValid(char * path, OTPLocation location) {
 	*/
 	getSector((u8 *)SECTOR_OFFSET);
 
-	/*
-	Should be good to go by this point if using the sha256 from RAM
-	*/
-	if (location == OTP_LOCATION_MEMORY) {
-		return true;
-	}
-
-	/*
-	Check if OTP matches
-	*/
-	u32 i = checkOTPMatch();
-
-	/*
-	No match found - OTP is invalid
-	*/
-	if(i == 3) {
-		validOTPFound = false;
-		return false;
-	}
 	
-	return validOTPFound;
-}
-
-void sa9lhi(bool allowExit) {
-	/*
-	If OTP needs to be checked (this should always be the case unless SA9LHI was run
-	using OTP bypass)
-	*/
-	if (!OTPChecked) {
-		/*
-		If the user is allowed to back out from SafeA9LHInstaller then this means that
-		it was run from the options menu. Therefore, read the sha256 from RAM. We can
-		do this safely because the only way to enter the options menu is if the user
-		entered a correct PIN, or if they used OTP bypass. We therefore don't care
-		whether or not they have the OTP on disk
-		*/
-		if (allowExit) {
-			otpIsValid(NULL, OTP_LOCATION_MEMORY);
-		}
-		/*
-		If the user is NOT allowed to back out from SafeA9LHInstaller then this means
-		that it was run in a rare situation in which godmode could not be achieved.
-		In this situation, the user cannot verify their PIN or use OTP bypass. For
-		this reason, read the sha256 from disk to make sure the user actually has a
-		valid OTP.
-		*/
-		else {
-			otpIsValid("OTP.BIN", OTP_LOCATION_DISK);
-		}
-	}
 	
-	/*
-	Die if no valid OTP was found
-	*/
-	if (!validOTPFound) {
-		error("Can't run SafeA9LHInstaller as no valid OTP\nfound. Ensure otp.bin is on your SD card.", !allowExit);
-		return;
-	}
+	
+	
+	
+	
+	
+	
+	
+	
 
 	u32 updatea9lh = 0;
 	u32 i = checkOTPMatch();
@@ -263,5 +228,27 @@ void sa9lhi(bool allowExit) {
 	}
 	else if (pressed == BUTTON_B && allowExit) {
 		return;
+	}
+}
+
+bool saveSHA() {
+	FIL shaFile;
+
+	if(f_open(&shaFile, SHA_PATH, FA_WRITE | FA_CREATE_ALWAYS) == FR_OK) {	
+		unsigned int bw;
+		f_write (&shaFile, (void *)REG_SHA_HASH, 0x20, &bw);
+		f_sync(&shaFile);
+		f_close(&shaFile);
+
+		if (bw == 0) {
+			f_unlink(SHA_PATH);
+			return false;
+		}
+		else {
+			return true;
+		}
+	}
+	else {
+		return false;
 	}
 }
