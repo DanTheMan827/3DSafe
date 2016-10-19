@@ -7,6 +7,7 @@
 #include "crypto.h"
 #include "memory.h"
 #include "nand/sdmmc.h"
+#include "nand/nand.h"
 #include <string.h>
 
 /****************************************************************
@@ -371,7 +372,7 @@ void setupKeyslot0x11(u32 a9lhBoot, const void *otp)
     u8 keyY[0x10];
 
     //If booting via A9LH, use the leftover contents of the SHA register
-    if(a9lhBoot) memcpy((void *)shasum, (void *)REG_SHA_HASH, 0x20);
+    if(a9lhBoot) memcpy((void *)shasum, (void *)OtpSha256, 0x20);
     //Else calculate the otp.bin hash
     else sha(shasum, otp, 0x90, SHA_256_MODE);
 

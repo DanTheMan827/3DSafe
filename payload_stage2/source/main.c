@@ -136,9 +136,9 @@ void drawPINGfx(char * entered) {
 			else if (c == 'D') {
 				filename = "0:/3dsafe/d.bin";
 			}
-			else if (c == '-') {
-				filename = "0:/3dsafe/underscore.bin";
-			}
+// 			else if (c == '-') {
+// 				filename = "0:/3dsafe/underscore.bin";
+// 			}
 		
 			if (!drawImage(filename, 36, 36, drawX, 204, SCREEN_TOP)) {
 				success = false;
@@ -733,11 +733,6 @@ void bootOrOptions() {
 int main()
 {
     /*
-    Screen init
-    */
-    prepareForBoot();
-    
-    /*
     DEBUG: Allow skipping past everything for brick protection during development
     */
 //     drawString("Press X to skip 3DSafe, any other button to enter 3DSafe", 10, 10, COLOR_RED);
@@ -754,6 +749,11 @@ int main()
 	Enter Godmode to gain access to SysNAND
 	*/
 	if(!enterGodMode()) {
+		/*
+		Screen init
+		*/
+		prepareForBoot();
+	
 		FATFS afs;
 		f_mount(&afs, "0:", 0);
 	
@@ -769,6 +769,11 @@ int main()
 		return 0;
 	}
 	
+	/*
+    Screen init
+    */
+    prepareForBoot();
+	
 	FIL disable;
 	
 	if(f_open(&disable, DISABLE_PATH, FA_READ) == FR_OK) {
@@ -781,7 +786,7 @@ int main()
 	}
 	
 	/*
-	SHA BYPASS
+	SHA/OTP BYPASS
 	*/
 	SHACheckResult SHAResult = checkSHA();
 	
@@ -791,7 +796,7 @@ int main()
 		if (SHAResult == SHACheckResultValid) {
 			if (!drawImage("0:/3dsafe/bypass.bin", 400, 240, 0, 0, SCREEN_TOP)) {
 				clearScreens(SCREEN_TOP);
-				drawString("PIN LOCK BYPASSED.\n \nYour device is not currently protected by\n3DSafe because your sha.bin is in the root\nof your SD card. You should remove this\nfile to ensure your device is protected\nby 3DSafe.\n \nPress any key to continue.", 10, 10, COLOR_RED);
+				drawString("PIN LOCK BYPASSED.\n \nYour device is not currently protected by\n3DSafe because sha.bin/otp.bin is in the root\nof your SD card. You should remove this\nfile to ensure your device is protected\nby 3DSafe.\n \nPress any key to continue.", 10, 10, COLOR_RED);
 			}
 			
 			waitInput();
@@ -803,77 +808,7 @@ int main()
 			error("SHA bypass failed. Press any key to enter PIN.", false);
 		}
 	}
-    
-//     FIL shaFile;
-//     
-//     if(f_open(&shaFile, SHA_PATH, FA_READ) == FR_OK) {
-// 		drawLostImage();
-// 		
-// 		u8 shasum[0x20];
-// 		unsigned int read;
-// 		
-// 		f_read(&shaFile, (void*)shasum, 0x20, &read);
-// 		
-// 		if (memcmp((void*)shasum, (void *)REG_SHA_HASH, 0x20) == 0) {
-// 			error("Bypassed with SHA", false);
-// 			clearScreens(SCREEN_TOP);
-// 			displayOptions();
-// 			return 0;
-// 		}
-// 		else {
-// 			error("Invalid SHA", false);
-// 		}
-// 		
-// 		return 0;
-// 	}
-    
-    /*
-    OTP BYPASS
-    First, mount the SD card, check if the otp exists, and store the result in RES.
-    Then unmount the SD card (leaving it mounted might interfere with entering god mode later)
-    */
-//     FATFS otpFS;
-// 	f_mount(&otpFS, "0:", 0);
-    // FIL otp;
-//     char * otpPath = "0:/OTP.BIN";
-//     
-//     /*
-//     An otp.bin was found. Check if it is valid for this console
-//     */
-//     if(f_open(&otp,otpPath, FA_READ) == FR_OK) {
-//     	drawLostImage();
-//     
-//     	if (otpIsValid(otpPath, OTP_LOCATION_DISK)) {    	
-// 			//Inform the user that the PIN lock has been bypassed
-// 			if (!drawImage("0:/3dsafe/bypass.bin", 400, 240, 0, 0, SCREEN_TOP)) {
-// 				drawString("PIN LOCK BYPASSED. Press any key to enter 3DSafe options", 10, 10, COLOR_RED);
-// 			}
-// 			
-// 			//Wait for a keypress
-// 			waitInput();
-// 			clearScreens(SCREEN_TOP);
-// 			//Jump straight to the options menu without asking for the PIN
-// 			displayOptions();
-// 			return 0;
-// 		}
-// 		else {
-// 			//Inform the user that the OTP is invalid
-// 			if (!drawImage("0:/3dsafe/invalidotp.bin", 400, 240, 0, 0, SCREEN_TOP)) {
-// 				clearScreens(SCREEN_TOP);
-// 				drawString("INVALID otp.bin. Press any key to proceed to enter PIN.", 10, 10, COLOR_RED);
-// 			}
-// 			
-// 			//Wait for a keypress
-// 			waitInput();
-// 			clearScreens(SCREEN_TOP);
-// 						
-// 			//Continue as normal from this point (request PIN)
-// 		}
-//     }
-    
-    //Unmount existing FS in case it interferes with entering God Mode
-//     f_mount(NULL, "0:", 0);
-    
+        
 	
 	
 	/*
@@ -923,7 +858,7 @@ int main()
 	Clear the input buffer to dashes (for display purposes)
 	*/
 	for (int i=0; i<pinlen; i++) {
-		entered[i] = '-';
+		entered[i] = '\0';
 	}
 	entered[pinlen] = '\0';
 

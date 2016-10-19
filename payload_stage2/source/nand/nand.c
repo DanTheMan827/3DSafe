@@ -38,7 +38,7 @@ static u8 nand_magic_o3ds[0x60] = { // NCSD NAND header O3DS magic
 
 static u8 CtrNandCtr[16];
 static u8 TwlNandCtr[16];
-static u8 OtpSha256[32] = { 0 };
+u8 OtpSha256[32] = { 0 };
 
 static u32 emunand_base_sector = 0x000000;
 

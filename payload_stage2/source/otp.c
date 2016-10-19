@@ -13,6 +13,8 @@ https://github.com/AuroraWright/SafeA9LHInstaller
 #include "memory.h"
 #include "buttons.h"
 #include "godmode.h"
+#include "sha256.h"
+#include "nand.h"
 
 #define SECTOR_OFFSET     0x24100000
 #define FIRM0_OFFSET      0x24200000
@@ -69,25 +71,43 @@ u32 checkOTPMatch() {
 	return i;
 }
 
-SHACheckResult checkSHA() {
-	FIL shaFile;
-    
-    if(f_open(&shaFile, SHA_PATH, FA_READ) != FR_OK) {
-    	return SHACheckResultNoFile;
-    }
-	
-	u8 shasum[0x20];
-	unsigned int read;
-	
-	f_read(&shaFile, (void*)shasum, 0x20, &read);
-	
-	if (memcmp((void*)shasum, (void *)REG_SHA_HASH, 0x20) == 0) {
+SHACheckResult checkSHAWithSum(void * shasum) {
+	if (memcmp((void*)shasum, (void *)OtpSha256, 0x20) == 0) {
 		return SHACheckResultValid;
 	}
 	else {
 		return SHACheckResultInvalid;
 	}
+}
 
+SHACheckResult checkSHA() {
+	FIL shaFile;
+    
+    if(f_open(&shaFile, SHA_PATH, FA_READ) == FR_OK) {
+    	u8 shasum[0x20];
+		unsigned int read;
+	
+		f_read(&shaFile, (void*)shasum, 0x20, &read);
+		return checkSHAWithSum((void*)shasum);
+    }
+    else if(f_open(&shaFile, OTP_PATH, FA_READ) == FR_OK) {
+    	u8 otp[256];
+		unsigned int read;
+		u8 hash[32] = { 0 };
+	
+		f_read(&shaFile, (void*)otp, 256, &read);
+				
+		SHA256_CTX ctx;
+
+		sha256_init(&ctx);
+		sha256_update(&ctx, otp, 0x90);
+		sha256_final(&ctx, hash);
+		
+		return checkSHAWithSum((void*)hash);
+    }
+    else {
+    	return SHACheckResultNoFile;
+    }
 }
 
 void sa9lhi(bool allowExit) {
@@ -236,7 +256,7 @@ bool saveSHA() {
 
 	if(f_open(&shaFile, SHA_PATH, FA_WRITE | FA_CREATE_ALWAYS) == FR_OK) {	
 		unsigned int bw;
-		f_write (&shaFile, (void *)REG_SHA_HASH, 0x20, &bw);
+		f_write (&shaFile, (void *)OtpSha256, 0x20, &bw);
 		f_sync(&shaFile);
 		f_close(&shaFile);
 

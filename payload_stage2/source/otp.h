@@ -3,6 +3,7 @@
 #define OTP_OFFSET        0x24000000
 
 #define SHA_PATH "0:/SHA.BIN"
+#define OTP_PATH "0:/OTP.BIN"
 
 extern bool OTPChecked;
 extern bool validOTPFound;
