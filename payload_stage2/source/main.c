@@ -1,3 +1,7 @@
+//3DSafe code: Main file: Boot, change PIN, etc..
+//3DSafe made by Mashers
+//Images loading from NAND code by MaorNinja
+
 #include "types.h"
 #include "i2c.h"
 #include "screen.h"
@@ -16,14 +20,13 @@
 #define A11_PAYLOAD_LOC 0x1FFF4C80 //keep in mind this needs to be changed in the ld script for arm11 too
 #define A11_ENTRY       0x1FFFFFF8
 
-#define DISABLE_PATH "1:/3dsafe/disable"
+#define DISABLE_PATH "1:/homebrew/3dsafe/disable"
 
-#define SD_LOST_PATH "0:/3dsafe/lost.bin"
-#define SYS_LOST_PATH "1:/3dsafe/lost.bin"
+#define SD_LOST_PATH "0:/3ds/3dsafe/lost.bin"
+#define SYS_LOST_PATH "1:/homebrew/3dsafe/lost.bin"
 
-#define SD_EBOOT_PATH "0:/3dsafe/emergency.bin"
-#define SYS_EBOOT_PATH "1:/3dsafe/emergency.bin"
-#define SYS_TEMP_EBOOT_PATH "1:/3dsafe/emergencytemp.bin"
+#define SD_EBOOT_PATH "0:/3ds/3dsafe/emergency.bin"
+#define SYS_EBOOT_PATH "1:/homebrew/3dsafe/emergency.bin"
 
 #define PIN_MAX_LENGTH 10
 
@@ -101,50 +104,47 @@ void drawPINText(char * entered) {
 
 void drawPINGfx(char * entered) {
 	bool success = true;
-		
-	if (drawImage("0:/3dsafe/pinbottom.bin", 400, 36, 0, 204, SCREEN_TOP)) {
+
+	if (drawImage("1:/homebrew/3dsafe/images/pinbottom.bin", 400, 36, 0, 204, SCREEN_TOP)) {
 		int len = strlen(entered);
 		int stringWidth = (len*36);// + ((len-1)*16);
 		int drawX = (400/2)-(stringWidth/2);
-	
+
 		for (int p=0; p<len; p++) {
 			char * filename;
 	
 			char c = entered[p];
-		
+
 			if (c == 'A') {
-				filename = "0:/3dsafe/a.bin";
+				filename = "1:/homebrew/3dsafe/a.bin";
 			}
 			else if (c == 'B') {
-				filename = "0:/3dsafe/b.bin";
+				filename = "1:/homebrew/3dsafe/b.bin";
 			}
 			else if (c == 'X') {
-				filename = "0:/3dsafe/x.bin";
+				filename = "1:/homebrew/3dsafe/x.bin";
 			}
 			else if (c == 'Y') {
-				filename = "0:/3dsafe/y.bin";
+				filename = "1:/homebrew/3dsafe/y.bin";
 			}
 			else if (c == 'L') {
-				filename = "0:/3dsafe/l.bin";
+				filename = "1:/homebrew/3dsafe/l.bin";
 			}
 			else if (c == 'R') {
-				filename = "0:/3dsafe/r.bin";
+				filename = "1:/homebrew/3dsafe/r.bin";
 			}
 			else if (c == 'U') {
-				filename = "0:/3dsafe/u.bin";
+				filename = "1:/homebrew/3dsafe/u.bin";
 			}
 			else if (c == 'D') {
-				filename = "0:/3dsafe/d.bin";
+				filename = "1:/homebrew/3dsafe/d.bin";
 			}
-// 			else if (c == '-') {
-// 				filename = "0:/3dsafe/underscore.bin";
-// 			}
 		
 			if (!drawImage(filename, 36, 36, drawX, 204, SCREEN_TOP)) {
 				success = false;
 				break;
 			}
-		
+
 			drawX+=32;//(36+16);
 		}
 	}
@@ -174,14 +174,14 @@ void setNewPIN(bool force) {
 	for (int i=0; i<bufferSize; i++) {
 		entered[i] = '\0';
 	}
-	
+
 	/*
 	Draw a prompt to enter some characters for the PIN
 	*/
-	char * imagePath = (force) ? "0:/3dsafe/forcechangepin.bin" : "0:/3dsafe/changepin.bin";
-	
+	char * imagePath = (force) ? "1:/homebrew/3dsafe/forcechangepin.bin" : "1:/homebrew/3dsafe/changepin.bin";
+
 	bool drewGraphicalChangePrompt = drawImage(imagePath, 400, 240, 0, 0, SCREEN_TOP);
-	
+
 	if (!drewGraphicalChangePrompt) {
 		clearScreens(SCREEN_TOP);
 		drawString("Enter new PIN using ABXY and D-Pad", 10, 10, COLOR_RED);
@@ -190,7 +190,7 @@ void setNewPIN(bool force) {
 			drawString("Press SELECT to cancel", 10, 40, COLOR_WHITE);
 		}
 	}
-	
+
 	//While still entering characters
 	while (getPIN == 1) {
 		//Draw what has been entered so far
@@ -200,7 +200,7 @@ void setNewPIN(bool force) {
 		else {
 			drawPINText(entered);
 		}
-	
+
 // 		drawString(entered, 10, 50, COLOR_WHITE);
 
 		//Wait for the user to press a button
@@ -213,12 +213,12 @@ void setNewPIN(bool force) {
 			getPIN = 0;
 		}
 		else if (key == BUTTON_SELECT && !force) {
-			if (!drawImage("0:/3dsafe/pinnotchanged.bin", 400, 240, 0, 0, SCREEN_TOP)) {
+			if (!drawImage("1:/homebrew/3dsafe/pinnotchanged.bin", 400, 240, 0, 0, SCREEN_TOP)) {
 				clearScreens(SCREEN_TOP);
 				drawString("Your PIN was not changed", 10, 10, COLOR_RED);
 				drawString("Press any key to continue", 10, 30, COLOR_WHITE);
 			}
-			
+
 			waitInput();
 			displayOptions();
 			return;
@@ -255,21 +255,13 @@ void setNewPIN(bool force) {
 	/*
 	Enter god mode if necessary
 	*/
-// 	if (!godMode) {
-// 		/*
-// 		Enter Godmode to gain access to SysNAND
-// 		*/
-// 		if(!enterGodMode()) {
-// 			error("Could not gain access to SysNAND");
-// 		}
-// 	}
 
 	/*
 	Open the pin file in NAND
 	*/
 	FIL pinFile;
 
-	if(f_open(&pinFile, "1:/3dsafe/pin.txt", FA_WRITE | FA_CREATE_ALWAYS) == FR_OK) {
+	if(f_open(&pinFile, "1:/homebrew/3dsafe/pin.txt", FA_WRITE | FA_CREATE_ALWAYS) == FR_OK) {
 		/*
 		Write the PIN to the file
 		*/
@@ -282,10 +274,11 @@ void setNewPIN(bool force) {
 		Show success message and then boot payload
 		*/
 		if (bw > 0) {
-			if (drawImage("0:/3dsafe/pinchanged.bin", 400, 240, 0, 0, SCREEN_TOP)) {
+			if (drawImage("0:/3ds/3dsafe/pinchanged.bin", 400, 240, 0, 0, SCREEN_TOP)) {
 				drawPINGfx(entered);
-			}
-			else {
+			} else if (drawImage("1:/3dsafe/pinchanged.bin", 400, 240, 0, 0, SCREEN_TOP)) {
+				drawPINGfx(entered);
+			} else {
 				clearScreens(SCREEN_TOP);
 				drawString("PIN changed to:", 10, 10, COLOR_RED);
 				drawString(entered, 10, 30, COLOR_WHITE);
@@ -296,7 +289,7 @@ void setNewPIN(bool force) {
 			displayOptions();
 			return;
 		}
-		
+
 		/*
 		Show save error
 		*/
@@ -315,20 +308,15 @@ void setNewPIN(bool force) {
 
 void showAbout() {
 	clearScreens(SCREEN_TOP);
-	drawString("About 3DSafe", 10, 10, COLOR_TITLE);
-	drawString("3DSafe 0.11 by mashers", 10, 30, COLOR_WHITE);
-	drawString("GitHub repo: http://goo.gl/QLsBx3", 10, 40, COLOR_WHITE);
+	drawString("About 3DSafe: Imagery edition", 10, 10, COLOR_TITLE);
+	drawString("3DSafe: Imagery edition 0.01 by maorninja", 10, 30, COLOR_WHITE);
 
-	drawString("Payloads based on ShadowNAND by RShadowHand", 10, 60, COLOR_WHITE);
-	drawString("GitHub repo: http://goo.gl/DYP4IA", 10, 70, COLOR_WHITE);
-	
-	drawString("NAND read/write from GodMode9 by d0k3", 10, 90, COLOR_WHITE);
-	drawString("GitHub repo: http://goo.gl/Ejhjf8", 10, 100, COLOR_WHITE);
-	
-	drawString("Incorporates SafeA9LHInstaller by AuroraWright", 10, 120, COLOR_WHITE);
-	drawString("GitHub repo: http://goo.gl/XkRYAQ", 10, 130, COLOR_WHITE);
-	
-	drawString("Press any key to continue", 10, 150, COLOR_WHITE);
+	drawString("Based off 3DSafe (no longer downloadable) by mashers", 10, 50, COLOR_WHITE);
+	drawString("Payloads based on ShadowNAND by ShadowHand", 10, 60, COLOR_WHITE);
+	drawString("NAND read/write from GodMode9 by d0k3", 10, 70, COLOR_WHITE);
+	drawString("Incorporates SafeA9LHInstaller by AuroraWright", 10, 80, COLOR_WHITE);
+
+	drawString("Press any key to continue", 10, 100, COLOR_WHITE);
 	
 	waitInput();
 }
@@ -336,7 +324,7 @@ void showAbout() {
 void togglePin() {
 	if (pinStatus == PIN_STATUS_ALWAYS) {
 		FIL f;
-	
+
 		if(f_open(&f, DISABLE_PATH, FA_WRITE | FA_CREATE_ALWAYS) == FR_OK) {
 			pinStatus = PIN_STATUS_NEVER;
 		}
@@ -354,16 +342,20 @@ bool drawPINStatusImage() {
 	char * pinStatusImagePath = NULL;
 	
 	if (pinStatus == PIN_STATUS_ALWAYS) {
-		pinStatusImagePath = "0:/3dsafe/pinalways.bin";
+		pinStatusImageNANDPath = "1:/homebrew/3dsafe/pinalways.bin";
+		pinStatusImageSDPath = "0:/3ds/3dsafe/pinalways.bin";
 	}
 	else if (pinStatus == PIN_STATUS_NEVER) {
-		pinStatusImagePath = "0:/3dsafe/pinnever.bin";
+		pinStatusImageNANDPath = "1:/homebrew/3dsafe/pinnever.bin";
+		pinStatusImageSDPath = "0:/3ds/3dsafe/pinnever.bin";
 	}
 	
-	if (pinStatusImagePath != NULL) {
-		return drawImage(pinStatusImagePath, 20, 26, 171, 108, SCREEN_TOP);
+	if (pinStatusImageSDPath != NULL) {
+		return drawImage(pinStatusImageSDPath, 20, 26, 171, 108, SCREEN_TOP);
+	} else if (pinStatusImageNANDPath != NULL) {
+		return drawImage(pinStatusImageNANDPath, 20, 26, 171, 108, SCREEN_TOP);
 	}
-	
+
 	return false;
 }
 
@@ -410,7 +402,7 @@ void updateNANDFiles() {
 				success = false;
 				break;
 			}
-		
+
 			if (FileSetData(SYS_TEMP_EBOOT_PATH, data, bytesToRead, readOffset, create)) {
 				create = false;
 				readOffset += bytesToRead;
@@ -420,37 +412,37 @@ void updateNANDFiles() {
 				break;
 			}			
 		}
-		
+
 		if (success) {
 			updatedEBoot = true;
-		
+
 			f_unlink(SYS_EBOOT_PATH);
 			f_rename (SYS_TEMP_EBOOT_PATH, SYS_EBOOT_PATH);
 		}
 		else {
-			error("The emergency payload could not be copied from\nyour SD card to CTRNAND. You should copy the\nfile manually using GodMode9 to the 3dsafe\ndirectory on CTRNAND.", false);
+			error("The emergency payload could not be copied from\nyour SD card to CTRNAND. You should copy the\nfile manually using FBI to the 3dsafe\ndirectory on CTRNAND.", false);
 		}
 	}
-	
+
 	if (updatedLost || updatedEBoot) {
-		if (!drawImage("0:/3dsafe/nandupdated.bin", 400, 240, 0, 0, SCREEN_TOP)) {
+		if (!drawImage("1:/homebrew/3dsafe/nandupdated.bin", 400, 240, 0, 0, SCREEN_TOP)) {
 			clearScreens(SCREEN_TOP);
 			drawString("NAND files updated", 10, 10, COLOR_TITLE);
 			drawString("The following files have been successfully\nupdated on your CTRNAND, and will be available\nfor use even if the SD card is not present.", 10, 30, COLOR_WHITE);
 			drawString("Press any key to continue", 10, 230, COLOR_WHITE);
 		}
-		
+
 		int yPos = 144;
-		
+
 		if (updatedLost) {
 			drawString("Owner contact details (lost.bin)", 10, yPos, COLOR_WHITE);
 			yPos += 10;
 		}
-		
+
 		if (updatedEBoot) {
 			drawString("Emergency boot payload (emergency.bin)", 10, yPos, COLOR_WHITE);
 		}
-		
+
 		waitInput();
 	}
 	else {
@@ -473,10 +465,10 @@ void displayOptions() {
 	/*
 		Display the options on the screen
 	*/
-	if (drawImage("0:/3dsafe/options.bin", 400, 240, 0, 0, SCREEN_TOP)) {
+	if (drawImage("0:/3ds/3dsafe/options.bin", 400, 240, 0, 0, SCREEN_TOP)) {
 // 		drewOptionsGfx = true;
 		drewPINStatusGfx = drawPINStatusImage();
-		
+
 		if (!drewPINStatusGfx) {
 			if (pinStatus == PIN_STATUS_ALWAYS) {
 				drawString("Always", 103, 137, COLOR_WHITE);
@@ -485,12 +477,23 @@ void displayOptions() {
 				drawString("Never", 103, 137, COLOR_WHITE);
 			}
 		}
-	}
-	else {
+	} else if (drawImage("1:/homebrew/3dsafe/options.bin", 400, 240, 0, 0, SCREEN_TOP)) {
+// 		drewOptionsGfx = true;
+		drewPINStatusGfx = drawPINStatusImage();
+
+		if (!drewPINStatusGfx) {
+			if (pinStatus == PIN_STATUS_ALWAYS) {
+				drawString("Always", 103, 137, COLOR_WHITE);
+			}
+			else if (pinStatus == PIN_STATUS_NEVER) {
+				drawString("Never", 103, 137, COLOR_WHITE);
+			}
+		}
+	} else {
 		clearScreens(SCREEN_TOP);
-		
+
 		drawString("3DSafe Options", 10, 10, COLOR_RED);
-		
+
 		drawString(" START: Boot payload", 10, 30, COLOR_WHITE);
 		
 		if (pinStatus == PIN_STATUS_ALWAYS) {
@@ -499,7 +502,7 @@ void displayOptions() {
 		else if (pinStatus == PIN_STATUS_NEVER) {
 			drawString("SELECT: Toggle lock (current: never)", 10, 40, COLOR_WHITE);
 		}
-		
+
 		drawString("     A: Change PIN", 10, 50, COLOR_WHITE);
 		drawString("     B: Power off", 10, 60, COLOR_WHITE);
 		drawString("     X: SafeA9LHInstaller", 10, 70, COLOR_WHITE);
@@ -510,7 +513,7 @@ void displayOptions() {
 	while (validOption == 0) {
 		//Wait for input
 		key = waitInput();
-		
+
 		/*
 		If the button pressed corresponds to a menu option, break out of the while loop
 		*/
@@ -592,11 +595,11 @@ void displayOptions() {
 	*/
 	else if (key == BUTTON_L1) {	
 		if (saveSHA()) {
-			if (!drawImage("0:/3dsafe/shadumped.bin", 400, 240, 0, 0, SCREEN_TOP)) {
+			if (!drawImage("1:/homebrew/3dsafe/shadumped.bin", 400, 240, 0, 0, SCREEN_TOP)) {
 				clearScreens(SCREEN_TOP);
 				drawString("The SHA bypass file has been dumped to your SD\ncard. This file will bypass the requirement to\nenter your PIN.\n \nYou should now do the following:\n \n1. Reboot your 3DS to ensure the bypass works\n2. Store the SHA file safely somewhere other\n   than your 3DS\n3. Remove the SHA file from your 3DS SD card\n \nPress any key to continue.", 10, 10, COLOR_WHITE);
 			}
-		
+
 			waitInput();
 		}
 		else {
@@ -622,17 +625,14 @@ void bootPayload() {
 	/*
 	Prioritise the payload on the SD card
 	*/
-	if(f_open(&payload, "arm9loaderhax.bin", FA_READ) == FR_OK) {	
+	if(f_open(&payload, "3ds/boot.bin", FA_READ) == FR_OK) {	
 		foundPayload = true;
 	}
-	
-	/*
-	Fallback payload on CTRNAND if no SD payload found
-	*/
+
 	else if(f_open(&payload, SYS_EBOOT_PATH, FA_READ) == FR_OK) {
 		foundPayload = true;
 	}
-	
+
 	if (foundPayload) {	
 		/*
 		Read the payload and boot it
@@ -689,7 +689,11 @@ void drawLostImage() {
 }
 
 void showIncorrectPIN() {
-	if (drawImage("0:/3dsafe/incorrect.bin", 400, 240, 0, 0, SCREEN_TOP)) {
+	if (drawImage("0:/3ds/3dsafe/incorrect.bin", 400, 240, 0, 0, SCREEN_TOP)) {
+		waitInput();
+		mcuShutDown();
+	}
+	else if (drawImage("1:/homebrew/3dsafe/incorrect.bin", 400, 240, 0, 0, SCREEN_TOP)) {
 		waitInput();
 		mcuShutDown();
 	}
@@ -702,7 +706,7 @@ void showIncorrectPIN() {
 bool getPINFromNAND(char storedPin[PIN_MAX_LENGTH+1]) {
 	//Read a file from NAND
 	u8 pinData[PIN_MAX_LENGTH];
-	size_t pinFileSize = FileGetData("1:/3dsafe/pin.txt", pinData, PIN_MAX_LENGTH, 0);
+	size_t pinFileSize = FileGetData("1:/homebrew/3dsafe/pin.txt", pinData, PIN_MAX_LENGTH, 0);
 
 	if (pinFileSize > 0) {
 		for (int i=0; i<PIN_MAX_LENGTH; i++) {
@@ -732,18 +736,6 @@ void bootOrOptions() {
 
 int main()
 {
-    /*
-    DEBUG: Allow skipping past everything for brick protection during development
-    */
-//     drawString("Press X to skip 3DSafe, any other button to enter 3DSafe", 10, 10, COLOR_RED);
-//     u32 key = waitInput();
-//     if (key == BUTTON_X) {
-// 		FATFS afs;
-// 		f_mount(&afs, "0:", 0); //This never fails due to deferred mounting
-//     	bootPayload();
-//     	return 0;
-//     }
-//     clearScreens(SCREEN_TOP);
     
     /*
 	Enter Godmode to gain access to SysNAND
@@ -753,14 +745,14 @@ int main()
 		Screen init
 		*/
 		prepareForBoot();
-	
+
 		FATFS afs;
 		f_mount(&afs, "0:", 0);
 	
-		if (!drawImage("3dsafe/nogodmode.bin", 400, 240, 0, 0, SCREEN_TOP)) {
+		if (!drawImage("3ds/3dsafe/nogodmode.bin", 400, 240, 0, 0, SCREEN_TOP)) {
 			drawString("Could not gain access to sysNAND\nPress any key to run SafeA9LHInstaller.\nFrom here you can install a different A9LH payload.", 10, 10, COLOR_RED);
 		}
-		
+
 		waitInput();
 		
 // 		otpIsValid("OTP.BIN", OTP_LOCATION_DISK);
@@ -792,13 +784,13 @@ int main()
 	
 	if (SHAResult != SHACheckResultNoFile) {
 		drawLostImage();
-	
+
 		if (SHAResult == SHACheckResultValid) {
-			if (!drawImage("0:/3dsafe/bypass.bin", 400, 240, 0, 0, SCREEN_TOP)) {
+			if (!drawImage("1:/3ds/3dsafe/bypass.bin", 400, 240, 0, 0, SCREEN_TOP)) {
 				clearScreens(SCREEN_TOP);
 				drawString("PIN LOCK BYPASSED.\n \nYour device is not currently protected by\n3DSafe because sha.bin/otp.bin is in the root\nof your SD card. You should remove this\nfile to ensure your device is protected\nby 3DSafe.\n \nPress any key to continue.", 10, 10, COLOR_RED);
 			}
-			
+
 			waitInput();
 			
 			displayOptions();
@@ -814,10 +806,10 @@ int main()
 	/*
 	Create directory for 3DSafe files (if necessary)
 	*/
-	f_mkdir("1:/3dsafe");
-	
+	f_mkdir("1:/homebrew/3dsafe");
+
 	clearScreens(SCREEN_TOP);
-	
+
 	drawLostImage();
 	
 	/*
@@ -829,14 +821,14 @@ int main()
     if (!getPINFromNAND(pin)) {
 	    //If no PIN could be read from NAND, try creating a new one
     	setNewPIN(true);
-    	
+    
     	//If we still can't get a PIN from NAND, show an error and die
     	if (!getPINFromNAND(pin)) {	
 			error("Failed to get PIN from NAND. You should use otp.bin bypass to regain access to your device", true);
 		}
     }
-    
-    drewPINImage = drawImage("0:/3dsafe/pinrequest.bin", 400, 240, 0, 0, SCREEN_TOP);
+
+    drewPINImage = drawImage("1:/homebrew/3dsafe/pinrequest.bin", 400, 240, 0, 0, SCREEN_TOP);
 	
 	/*
 	DEBUG: print the read PIN on the screen
@@ -911,16 +903,9 @@ int main()
 		char current = translateButton(key);
 		
 		if (current == last) {
-// 			clearScreens(SCREEN_TOP);
-// 			drawString("Held last key - show options", 10, 40, COLOR_WHITE);
-// 			waitInput();
-		
 			displayOptions();
 		}
 		else {
-// 			clearScreens(SCREEN_TOP);
-// 			drawString("Didn't hold last key - boot", 10, 40, COLOR_WHITE);
-// 			waitInput();
 		
 			bootPayload();
 		}
@@ -931,20 +916,6 @@ int main()
 	*/
 	else {	
 		showIncorrectPIN();
-		
-// 		drawString("Incorrect PIN", 10, 10, COLOR_RED);
-		
-// 		drawString("Incorrect PIN\n\nIf you have forgotten your PIN, place your\notp.bin at the root of your SD card. The\nfilename must be in lower case, and the\nOTP must match this device. You will then\nbe able to reset your 3DSafe PIN", 10, 30, COLOR_WHITE);
-// 		drawString("", 10, 40, COLOR_WHITE);
-// 		drawString("", 10, 50, COLOR_WHITE);
-// 		drawString("", 10, 60, COLOR_WHITE);		
-// 		drawString(".", 10, 70, COLOR_WHITE);
-// 		
-// 		drawString("Press any key to power off", 10, 90, COLOR_RED);
-		
-// 		waitInput();
-// 		
-// 		mcuShutDown();
 	}
     
 }
